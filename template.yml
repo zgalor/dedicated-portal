@@ -1,0 +1,314 @@
+#
+# Copyright (c) 2018 Red Hat, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# This file contains an OpenShift template that creates all the objects needed
+# for a working installation of the application. See the `template.sh` file for
+# an example of how to use it.
+
+---
+
+apiVersion: v1
+kind: Template
+metadata:
+  name: dedicated-portal
+  annotations:
+    description: "Dedicated Portal"
+
+parameters:
+
+- name: NAMESPACE
+  description: The namespace where the objects will be created.
+  value: dedicated-portal
+
+- name: DOMAIN
+  description: The DNS domain where the routes will be created.
+  value: example.com
+
+- name: PASSWORD
+  description: Password for the database user.
+
+objects:
+
+- apiVersion: apps/v1beta1
+  kind: Deployment
+  metadata:
+    name: messaging-service
+    labels:
+      app: messaging-service
+  spec:
+    selector:
+      matchLabels:
+        app: messaging-service
+    replicas: 1
+    template:
+      metadata:
+        labels:
+          app: messaging-service
+      spec:
+        containers:
+        - name: service
+          image: dedicated-portal/messaging-service:0.0.0
+          imagePullPolicy: IfNotPresent
+          command:
+          - /usr/bin/echo
+          - "This is the messaging service."
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: messaging-service
+    labels:
+      app: messaging-service
+  spec:
+    selector:
+      app: messaging-service
+    ports:
+    - port: 61613
+      targetPort: 61613
+
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: messaging-service
+  spec:
+    host: messaging-service.${DOMAIN}
+    to:
+      kind: Service
+      name: messaging-service
+    tls:
+      termination: passthrough
+
+- apiVersion: apps/v1beta1
+  kind: Deployment
+  metadata:
+    name: clusters-db
+    labels:
+      app: clusters-db
+  spec:
+    selector:
+      matchLabels:
+        app: clusters-db
+    replicas: 1
+    template:
+      metadata:
+        labels:
+          app: clusters-db
+      spec:
+        volumes:
+        - name: data
+          emptyDir: {}
+        containers:
+        - name: etcd
+          image: quay.io/coreos/etcd:v3.1.11
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+          - name: data
+            mountPath: /var/lib/etcd
+          command:
+          - /usr/local/bin/etcd
+          - --data-dir=/var/lib/etcd
+          - --listen-client-urls=http://0.0.0.0:2379
+          - --advertise-client-urls=http://clusters-db.${NAMESPACE}.svc.cluster.local:2379
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: clusters-db
+    labels:
+      app: clusters-db
+  spec:
+    selector:
+      app: clusters-db
+    ports:
+    - port: 2379
+      targetPort: 2379
+
+- apiVersion: apps/v1beta1
+  kind: Deployment
+  metadata:
+    name: clusters-service
+    labels:
+      app: clusters-service
+  spec:
+    selector:
+      matchLabels:
+        app: clusters-service
+    replicas: 1
+    template:
+      metadata:
+        labels:
+          app: clusters-service
+      spec:
+        containers:
+        - name: service
+          image: dedicated-portal/clusters-service:0.0.0
+          imagePullPolicy: IfNotPresent
+          command:
+          - /usr/local/bin/clusters-service
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: clusters-service
+    labels:
+      app: clusters-service
+  spec:
+    selector:
+      app: clusters-service
+    ports:
+    - port: 8000
+      targetPort: 8000
+
+- apiVersion: apps/v1beta1
+  kind: Deployment
+  metadata:
+    name: customers-db
+    labels:
+      app: customers-db
+  spec:
+    selector:
+      matchLabels:
+        app: customers-db
+    replicas: 1
+    template:
+      metadata:
+        labels:
+          app: customers-db
+      spec:
+        volumes:
+        - name: data
+          emptyDir: {}
+        containers:
+        - name: etcd
+          image: quay.io/coreos/etcd:v3.1.11
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+          - name: data
+            mountPath: /var/lib/etcd
+          command:
+          - /usr/local/bin/etcd
+          - --data-dir=/var/lib/etcd
+          - --listen-client-urls=http://0.0.0.0:2379
+          - --advertise-client-urls=http://customers-db.${NAMESPACE}.svc.cluster.local:2379
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: customers-db
+    labels:
+      app: customers-db
+  spec:
+    selector:
+      app: customers-db
+    ports:
+    - port: 2379
+      targetPort: 2379
+
+- apiVersion: apps/v1beta1
+  kind: Deployment
+  metadata:
+    name: customers-service
+    labels:
+      app: customers-service
+  spec:
+    selector:
+      matchLabels:
+        app: customers-service
+    replicas: 1
+    template:
+      metadata:
+        labels:
+          app: customers-service
+      spec:
+        containers:
+        - name: service
+          image: dedicated-portal/customers-service:0.0.0
+          imagePullPolicy: IfNotPresent
+          command:
+          - /usr/local/bin/customers-service
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: customers-service
+    labels:
+      app: customers-service
+  spec:
+    selector:
+      app: customers-service
+    ports:
+    - port: 8000
+      targetPort: 8000
+
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: customers-service
+  spec:
+    host: customers-service.${DOMAIN}
+    to:
+      kind: Service
+      name: customers-service
+    tls:
+      termination: edge
+
+- apiVersion: apps/v1beta1
+  kind: Deployment
+  metadata:
+    name: customers-portal
+    labels:
+      app: customers-portal
+  spec:
+    selector:
+      matchLabels:
+        app: customers-portal
+    replicas: 1
+    template:
+      metadata:
+        labels:
+          app: customers-portal
+      spec:
+        containers:
+        - name: portal
+          image: dedicated-portal/customers-portal:0.0.0
+          imagePullPolicy: IfNotPresent
+          command:
+          - /usr/local/bin/customers-webserver
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: customers-portal
+    labels:
+      app: customers-portal
+  spec:
+    selector:
+      app: customers-portal
+    ports:
+    - port: 8000
+      targetPort: 8000
+
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: customers-portal
+  spec:
+    host: customers-portal.${DOMAIN}
+    to:
+      kind: Service
+      name: customers-portal
+    tls:
+      termination: edge

@@ -1,0 +1,17 @@
+sudo: required
+
+services:
+- docker
+
+language: go
+
+go:
+- "1.10"
+
+go_import_path: github.com/container-mgmt/dedicated-portal
+
+install:
+- go get github.com/golang/dep/cmd/dep
+
+script:
+- make images
