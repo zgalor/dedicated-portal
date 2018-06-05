@@ -58,13 +58,16 @@ objects:
         labels:
           app: messaging-service
       spec:
+        volumes:
+        - name: data
+          emptyDir: {}
         containers:
         - name: service
           image: dedicated-portal/messaging-service:0.0.0
           imagePullPolicy: IfNotPresent
-          command:
-          - /usr/bin/echo
-          - "This is the messaging service."
+          volumeMounts:
+          - name: data
+            mountPath: /var/lib/artemis
 
 - apiVersion: v1
   kind: Service
