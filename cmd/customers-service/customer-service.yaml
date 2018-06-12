@@ -1,0 +1,106 @@
+openapi: 3.0.0
+info:
+  version: 0.1
+  title: Customers Service Application.
+  description: Customers Service Application for the Openshift dedicated portal.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0
+paths:
+  /customers:
+    get:
+      description: Returns all existing customers.
+      responses:
+        '200':
+          description: An array of all existing customers.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/componentes/schemas/CustomersList'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      description: Create a Customer.
+      responses:
+        '200':
+          description: Information on the newly created Customer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/componentes/schemas/Customer'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /customers/{id}:
+    get:
+      description: Retrieves customer information for a specific customer.
+      responses:
+        '200':
+          description: information on a specific customer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/componentes/schemas/Customer'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    Customer:
+      type: object
+      required:
+        - id
+        - username
+        - associated_clusters
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        associated_clusters:
+          type: array
+          items:
+            type: integer
+    CustomersList:
+      type: object
+      required:
+        - page
+        - size
+        - total
+        - items
+      properties:
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+        items:
+          type: array
+          items:
+            type:
+              $ref: '#/componentes/schemas/Customer'
+    Error:
+      type: object
+      required:
+      - message
+      - code
+      properties:
+        message:
+          type: string
+        code:
+          type: integer
+          minimum: 100
+          maximum: 600
