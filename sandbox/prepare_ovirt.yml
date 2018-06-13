@@ -1,0 +1,40 @@
+---
+- name: Prepare the oVirt environment
+  hosts: local
+  connection: local
+  become: no
+  gather_facts: no
+  tasks:
+
+  - name: Get an oVirt SSO token
+    #no_log: true
+    ovirt_auth:
+      url: "{{ ovirt_url }}"
+      username: "{{ ovirt_user }}"
+      password: "{{ ovirt_password }}"
+      ca_file: "{{ ovirt_ca_file }}"
+
+  - name: Create the virtual machine
+    ovirt_vms:
+      auth: "{{ ovirt_auth }}"
+      name: "{{ sandbox_hostname }}"
+      template: "{{ ovirt_template }}"
+      cluster: "{{ ovirt_cluster }}"
+      memory: 8GiB
+      state: running
+      cloud_init:
+        nic_boot_protocol: static
+        nic_ip_address: "{{ sandbox_address }}"
+        nic_netmask: "{{ sandbox_netmask }}"
+        nic_gateway: "{{ sandbox_gateway }}"
+        nic_name: eth0
+        nic_on_boot: true
+        host_name: "{{ sandbox_hostname }}"
+        dns_search: "{{ sandbox_dns_search }}"
+        dns_servers: "{{ sandbox_dns_servers }}"
+        custom_script: "{{ lookup('file', 'user-data') }}"
+
+  - name: Revoke the oVirt SSO token
+    ovirt_auth:
+      state: absent
+      ovirt_auth: "{{ ovirt_auth }}"

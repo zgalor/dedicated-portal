@@ -1,0 +1,16 @@
+---
+- name: Clone the OpenShift installer
+  hosts: local
+  connection: local
+  become: no
+  gather_facts: no
+  tasks:
+
+  - name: Clone the git repository
+    command: |-
+      git clone
+      --branch openshift-ansible-3.9.30-1
+      https://github.com/openshift/openshift-ansible.git
+      ./installer
+    args:
+      creates: ./installer

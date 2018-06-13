@@ -1,0 +1,52 @@
+---
+- name: Prepare the virtual machine
+  hosts: sandbox
+  gather_facts: no
+  remote_user: admin
+  become: yes
+  tasks:
+
+  - name: Wait for SSH
+    wait_for_connection:
+      timeout: 60
+
+  - name: Disable cloud-init
+    file:
+       path: /etc/cloud/cloud-init.disabled
+       state: touch
+
+  - name: Add the SSH authorized key
+    authorized_key:
+      user: admin
+      key: "{{ sandbox_key }}"
+      state: present
+    when: sandbox_key is defined
+
+  - name: Install packages
+    yum:
+      name:
+      - NetworkManager
+      - docker
+      - epel-release
+
+  - name: Add admin to the docker group
+    user:
+      name: admin
+      groups: dockerroot
+
+  - name: Allow admin access to docker
+    copy:
+      dest: /etc/docker/daemon.json
+      content: |
+        {
+          "group": "dockerroot"
+        }
+
+  - name: Enable and start services
+    systemd:
+      name: "{{ item }}"
+      state: started
+      enabled: yes
+    with_items:
+    - NetworkManager
+    - docker

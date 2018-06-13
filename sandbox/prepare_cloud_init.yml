@@ -1,0 +1,36 @@
+---
+- name: Prepare the cloud-init configuration environment
+  hosts: local
+  connection: local
+  become: no
+  gather_facts: no
+  tasks:
+
+  - name: Generate the password hash
+    command: openssl passwd -1 {{ sandbox_password }}
+    register: openssl_passwd_result
+
+  - name: Save the password hash
+    set_fact:
+      sandbox_password_hash: "{{ openssl_passwd_result.stdout }}"
+
+  - name: Generate the cloud-init files
+    template:
+      src: "{{ item }}.j2"
+      dest: "{{ item }}"
+    with_items:
+    - meta-data
+    - user-data
+
+  - name: Generate the cloud-init ISO image
+    command: |-
+      genisoimage
+      --input-charset UTF-8
+      --joliet
+      --rock
+      --volid cidata
+      --output cloud-init.iso
+      meta-data
+      user-data
+    args:
+      creates: ./cloud-init.iso

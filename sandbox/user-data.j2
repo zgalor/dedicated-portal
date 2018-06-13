@@ -1,0 +1,35 @@
+#cloud-config
+
+# We want to have allways the same host keys, so that we don't need to
+# update the 'known_hosts' file of the client. To do so we need to
+# configure the SSH server so that it will not automatically generate
+# ŧhe host key pairs, and then we can put in place a fixed key pair.
+write_files:
+- path: /etc/sysconfig/sshd
+  owner: root:root
+  permissions: "0640"
+  content: |
+    AUTOCREATE_SERVER_KEYS=""
+    SSH_USE_STRONG_RNG=0
+- path: /etc/ssh/ssh_host_rsa_key
+  owner: root:ssh_keys
+  permissions: "0640"
+  content: |
+    {{ lookup('file', 'host_key') | indent(4) }}
+- path: /etc/ssh/ssh_host_rsa_key.pub
+  owner: root:root
+  permissions: "0644"
+  content: {{ lookup('file', 'host_key.pub') }}
+
+# Create an 'admin' user:
+users:
+- name: admin
+  gecos: Admin
+  lock-passwd: false
+  sudo: ALL=(ALL) NOPASSWD:ALL
+  passwd: "{{ sandbox_password_hash }}"
+  ssh_authorized_keys:
+  - {{ lookup('file', 'install_key.pub') }}
+
+# Enable SSH password authentication:
+ssh_pwauth: yes
