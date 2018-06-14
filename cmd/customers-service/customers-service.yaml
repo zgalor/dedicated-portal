@@ -69,14 +69,14 @@ components:
       type: object
       required:
         - id
-        - username
-        - associated_clusters
+        - name
+        - owned_clusters
       properties:
         id:
           type: string
-        username:
+        name:
           type: string
-        associated_clusters:
+        owned_clusters:
           type: array
           items:
             type: string
