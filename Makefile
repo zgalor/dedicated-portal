@@ -14,28 +14,28 @@
 # limitations under the License.
 #
 
-# This Makefile is just a wrapper calling the 'build' script, for those used
+# This Makefile is just a wrapper calling the 'build.py' script, for those used
 # to just run 'make'.
 
 .PHONY: binaries
 binaries:
-	./build binaries
+	./build.py binaries
 
 .PHONY: apps
 apps:
-	./build apps
+	./build.py apps
 
 .PHONY: images
 images:
-	./build images
+	./build.py images
 
 .PHONY: tars
 tars:
-	./build images --save
+	./build.py images --save
 
 .PHONY: tgzs
 tgzs:
-	./build images --save --compress
+	./build.py images --save --compress
 
 .PHONY: clean
 clean:
