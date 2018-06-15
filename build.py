@@ -33,7 +33,6 @@ IMPORT_PATH = "github.com/container-mgmt/dedicated-portal"
 
 # The name and version of the project:
 PROJECT_NAME = "dedicated-portal"
-PROJECT_VERSION = "0.0.0"
 
 # The regular expression that will be used to replace variable names
 # enclused with {{...}} with their values:
@@ -439,7 +438,7 @@ def ensure_image(image_name):
     image_tag = "{project}/{image}:{version}".format(
         project=PROJECT_NAME,
         image=image_name,
-        version=PROJECT_VERSION,
+        version=argv.version,
     )
 
     # The binaries and web applications will most probably be included in the
@@ -607,7 +606,7 @@ def ensure_global_variables():
         project_dir=ensure_project_dir(),
         project_link=ensure_project_link(),
         project_name=PROJECT_NAME,
-        project_version=PROJECT_VERSION,
+        project_version=argv.version,
     )
 
 
@@ -751,6 +750,11 @@ def main():
         help="Compress the tar files.",
         default=False,
         action="store_true",
+    )
+    images_parser.add_argument(
+        "--version",
+        help="Version of the project.",
+        default="latest",
     )
     images_parser.set_defaults(func=build_images)
 

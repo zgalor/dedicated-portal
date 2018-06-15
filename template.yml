@@ -33,6 +33,10 @@ parameters:
   description: The namespace where the objects will be created.
   value: dedicated-portal
 
+- name: VERSION
+  description: The version number of the project.
+  value: latest
+
 - name: DOMAIN
   description: The DNS domain where the routes will be created.
   value: example.com
@@ -63,7 +67,7 @@ objects:
           emptyDir: {}
         containers:
         - name: service
-          image: dedicated-portal/messaging-service:0.0.0
+          image: dedicated-portal/messaging-service:${VERSION}
           imagePullPolicy: IfNotPresent
           volumeMounts:
           - name: data
@@ -157,7 +161,7 @@ objects:
       spec:
         containers:
         - name: service
-          image: dedicated-portal/clusters-service:0.0.0
+          image: dedicated-portal/clusters-service:${VERSION}
           imagePullPolicy: IfNotPresent
           command:
           - /usr/local/bin/clusters-service
@@ -238,7 +242,7 @@ objects:
       spec:
         containers:
         - name: service
-          image: dedicated-portal/customers-service:0.0.0
+          image: dedicated-portal/customers-service:${VERSION}
           imagePullPolicy: IfNotPresent
           command:
           - /usr/local/bin/customers-service
@@ -286,7 +290,7 @@ objects:
       spec:
         containers:
         - name: portal
-          image: dedicated-portal/customers-portal:0.0.0
+          image: dedicated-portal/customers-portal:${VERSION}
           imagePullPolicy: IfNotPresent
           command:
           - /usr/local/bin/customers-webserver
