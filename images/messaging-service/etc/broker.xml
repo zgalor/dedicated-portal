@@ -122,6 +122,12 @@ limitations under the License.
         </anycast>
       </address>
 
+      <address name="clusters.notifications">
+        <multicast>
+          <queue name="clusters.notifications"/>
+        </multicast>
+      </address>
+
     </addresses>
 
     <broker-plugins>
