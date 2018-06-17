@@ -18,7 +18,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/componentes/schemas/CustomersList'
+                  $ref: '#/components/schemas/CustomersList'
         default:
           description: unexpected error
           content:
@@ -33,7 +33,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/componentes/schemas/Customer'
+                $ref: '#/components/schemas/Customer'
         default:
           description: unexpected error
           content:
@@ -49,7 +49,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/componentes/schemas/Customer'
+                $ref: '#/components/schemas/Customer'
         default:
           description: unexpected error
           content:
@@ -91,7 +91,7 @@ components:
           type: array
           items:
             type:
-              $ref: '#/componentes/schemas/Customer'
+              $ref: '#/components/schemas/Customer'
     Error:
       type: object
       required:
