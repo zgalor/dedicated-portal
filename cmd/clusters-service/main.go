@@ -18,8 +18,23 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/container-mgmt/dedicated-portal/pkg/signals"
 )
 
 func main() {
-	fmt.Printf("This is the clusters service.\n")
+	// Set up signals so we handle the first shutdown signal gracefully:
+	stopCh := signals.SetupHandler()
+
+	service := NewClustersService()
+	fmt.Println("Created cluster service.")
+
+	// This is temporary and should be replaced with reading from the queue
+	server := NewServer(stopCh, service)
+	err := server.start()
+	if err != nil {
+		panic(fmt.Sprintf("Error starting server: %v", err))
+	}
+
+	fmt.Println("Created server")
 }
