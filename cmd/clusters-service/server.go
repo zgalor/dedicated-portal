@@ -39,6 +39,8 @@ func (s Server) start() error {
 		fmt.Fprintf(w, "%s", b)
 
 	}).Methods("GET")
-	http.ListenAndServe(":8000", r)
+	fmt.Println("Listening.")
+	go http.ListenAndServe(":8000", r)
+	fmt.Println("Listened.")
 	return nil
 }
