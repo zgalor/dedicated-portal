@@ -17,9 +17,17 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
-	http.ListenAndServe(":8000", http.FileServer(http.Dir("/usr/local/share/customers-portal")))
+	r := mux.NewRouter()
+	r.HandleFunc("/api/clusters", ClusterHandler)
+	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("/usr/local/share/customers-portal"))))
+	http.Handle("/", r)
+	fmt.Println("Listening on http://localhost:8000")
+	http.ListenAndServe(":8000", r)
 }
