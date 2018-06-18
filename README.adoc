@@ -12,7 +12,7 @@ To build the project clone the repository in any directory and run the
 
 To build the container images run the `make images` command.
 
-== Deploying
+== Deploying to an existing cluster
 
 To deploy the application to an OpenShift cluster you will first need to
 build the images and upload them to the image registry used by the
@@ -60,3 +60,18 @@ To undeploy the application remove the `dedicated-portal` namespace:
 ```
 $ oc delete namespace dedicated-portal
 ```
+
+== Deploying using oc cluster up
+
+Run:
+....
+./hack/cluster-up.sh
+....
+[NOTE]
+====
+Getting accessible routes is possible by setting the template parameter:
+
+....
+# DOMAIN="127.0.0.1.nip.io"
+....
+====
