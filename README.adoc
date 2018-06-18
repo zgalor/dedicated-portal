@@ -32,7 +32,7 @@ Those `.tar` files can then be copied to the OpenShirt cluster, and
 uploaded to the image registry:
 
 ```
-$ scp *.tar myhost:.
+$ scp *.tar template.* myhost:.
 $ ssh root@myhost
 # docker load -i dedicated-portal_clusters-service_0.0.0.tar
 # docker load -i dedicated-portal_customers-service_0.0.0.tar
