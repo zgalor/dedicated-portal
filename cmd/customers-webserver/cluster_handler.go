@@ -20,44 +20,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
+
+	"github.com/golang/glog"
 )
 
 // ClusterHandler returns an index of all clusters in the system
 func ClusterHandler(w http.ResponseWriter, r *http.Request) {
-	pageParam, ok := r.URL.Query()["page"]
-
-	if !ok || len(pageParam) < 1 {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "Missing query parameter: page\n")
-		return
-	}
-	page, err := strconv.Atoi(pageParam[0])
+	w.Header().Set("Content-Type", "application/json")
+	page, err := getQueryParamInt("page", r)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "Bad query param: page, %v\n", err)
+		writeErrorJSON(w, http.StatusBadRequest, fmt.Sprintf("Bad query param: page, %v", err))
 		return
 	}
 
-	sizeParam, ok := r.URL.Query()["size"]
-
-	if !ok || len(sizeParam) < 1 {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "Missing query parameter: size\n")
-		return
-	}
-
-	size, err := strconv.Atoi(sizeParam[0])
+	size, err := getQueryParamInt("size", r)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "Bad query param: size, %v\n", err)
+		writeErrorJSON(w, http.StatusBadRequest, fmt.Sprintf("Bad query param: size, %v", err))
 		return
 	}
 
 	ret, err := json.Marshal(MockGetClusters(page, size))
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Marshal error: %v\n", err)
+		glog.Errorf("Can't marshal json for cluster list response: %v", err)
+		writeErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("Marshal error, %v", err))
 	} else {
 		w.WriteHeader(http.StatusOK)
 		w.Write(ret)

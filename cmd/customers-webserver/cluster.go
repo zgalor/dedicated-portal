@@ -32,14 +32,16 @@ type Cluster struct {
 
 // MockGetClusters return a list of clusters.
 // TODO write an actual GetClusters function to get them from the database
-func MockGetClusters(page int, size int) []Cluster {
-	clusters := make([]Cluster, size)
+func MockGetClusters(page int, size int) []*Cluster {
+	clusters := make([]*Cluster, size)
 	for i := 0; i < size; i++ {
-		clusterNumber := (page + 1) * i
-		if i == 0 {
-			clusterNumber = page
-		}
-		clusters[i] = Cluster{Name: fmt.Sprintf("test%d", clusterNumber), CloudProvider: "AWS", Region: "us-east-1", Nodes: 5, ID: clusterNumber}
+		clusterNumber := (page * size) + i
+		clusters[i] = &Cluster{
+			Name:          fmt.Sprintf("test%d", clusterNumber),
+			CloudProvider: "AWS",
+			Region:        "us-east-1",
+			Nodes:         5,
+			ID:            clusterNumber}
 	}
 	return clusters
 }
