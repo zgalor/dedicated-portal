@@ -28,6 +28,7 @@
       - NetworkManager
       - docker
       - epel-release
+      - rsync
 
   - name: Add admin to the docker group
     user:
