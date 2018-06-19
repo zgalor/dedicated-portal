@@ -120,7 +120,8 @@ have all the packages installed:
 ansible \
 genisoimage \
 python-ovirt-engine-sdk4 \
-python34
+python34 \
+python34-jinja2
 ```
 
 To create the virtual machine in an _oVirt_ environment you will first make sure
