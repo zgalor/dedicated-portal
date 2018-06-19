@@ -25,10 +25,10 @@ oc new-project dedicated-portal
 # Use the template to create the objects:
 oc process \
   --filename="template.yml" \
-  --param=NAMESPACE="dedicated-portal" \
-  --param=VERSION="latest" \
-  --param=DOMAIN="example.com" \
-  --param=PASSWORD="redhat123" \
+  --param=NAMESPACE="${TEMPLATE_NAMESPACE:-dedicated-portal}" \
+  --param=VERSION="${TEMPLATE_VERSION:-latest}" \
+  --param=DOMAIN="${TEMPLATE_DOMAIN:-example.com}" \
+  --param=PASSWORD="${TEMPLATE_PASSWORD:-redhat123}" \
 | \
 oc apply \
   --filename=-

@@ -24,4 +24,4 @@ done
 make images
 oc cluster up
 oc login -u system:admin
-./template.sh
+TEMPLATE_DOMAIN="127.0.0.1.nip.io" ./template.sh

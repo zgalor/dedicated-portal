@@ -74,12 +74,3 @@ Run:
 ./hack/cluster-up.sh
 ----
 
-[NOTE]
-====
-Getting accessible routes is possible by setting the template parameter:
-
-[source]
-----
-# DOMAIN="127.0.0.1.nip.io"
-----
-====
