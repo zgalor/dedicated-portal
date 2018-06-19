@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  version: 0.1
+  version: "0.1"
   title: Customers Service Application.
   description: Customers Service Application for the Openshift dedicated portal.
   license:
@@ -43,6 +43,13 @@ paths:
   /customers/{id}:
     get:
       description: Retrieves customer information for a specific customer.
+      parameters:
+        - name: id
+          in: path
+          description: ID of customer to use.
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: information on a specific customer.
@@ -72,7 +79,7 @@ components:
         associated_clusters:
           type: array
           items:
-            type: integer
+            type: string
     CustomersList:
       type: object
       required:
@@ -90,8 +97,7 @@ components:
         items:
           type: array
           items:
-            type:
-              $ref: '#/components/schemas/Customer'
+            $ref: '#/components/schemas/Customer'
     Error:
       type: object
       required:
