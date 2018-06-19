@@ -22,6 +22,7 @@ ansible \
 genisoimage \
 libvirt \
 python34 \
+python34-jinja2 \
 qemu-kvm \
 virt-install
 ```
