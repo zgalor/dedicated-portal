@@ -24,7 +24,7 @@ $ make tars
 $ ls *.tar | sort
 dedicated-portal_clusters-service_0.0.0.tar
 dedicated-portal_customers-service_0.0.0.tar
-dedicated-portal_customers-portal.0.0.tar
+dedicated-portal_customers-portal_0.0.0.tar
 dedicated-portal_messaging-service_0.0.0.tar
 ```
 
@@ -36,7 +36,7 @@ $ scp *.tar template.* myhost:.
 $ ssh root@myhost
 # docker load -i dedicated-portal_clusters-service_0.0.0.tar
 # docker load -i dedicated-portal_customers-service_0.0.0.tar
-# docker load -i dedicated-portal_customers-portal.0.0.tar
+# docker load -i dedicated-portal_customers-portal_0.0.0.tar
 # docker load -i dedicated-portal_messaging-service_0.0.0.tar
 ```
 
