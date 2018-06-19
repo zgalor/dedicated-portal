@@ -39,7 +39,12 @@ func ClusterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ret, err := json.Marshal(MockGetClusters(page, size))
+	ret, err := json.Marshal(map[string]interface{}{
+		"page":  page,
+		"size":  size,
+		"total": 10000,
+		"items": MockGetClusters(page, size)})
+
 	if err != nil {
 		glog.Errorf("Can't marshal json for cluster list response: %v", err)
 		writeErrorJSON(w, http.StatusInternalServerError, fmt.Sprintf("Marshal error, %v", err))
