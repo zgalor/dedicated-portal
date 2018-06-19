@@ -1,0 +1,9 @@
+instance-id: sandbox
+local-hostname: {{ sandbox_hostname }}
+network-interfaces: |+
+  iface eth0 inet static
+    address {{ sandbox_address }}
+    netmask {{ sandbox_netmask }}
+    gateway {{ sandbox_gateway }}
+  dns-search {{ sandbox_dns_search }}
+  dns-nameservers {{ sandbox_dns_servers }}

@@ -1,0 +1,13 @@
+---
+- name: Tasks to run after installing the cluster
+  hosts: sandbox
+  gather_facts: no
+  remote_user: admin
+  become: yes
+  tasks:
+
+  - name: Remove the SSH key used during setup
+    authorized_key:
+      user: admin
+      key: "{{ lookup('file', 'install_key.pub') }}"
+      state: absent

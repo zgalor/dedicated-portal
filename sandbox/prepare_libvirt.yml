@@ -1,0 +1,35 @@
+---
+- name: Prepare the libvirt environment
+  hosts: local
+  connection: local
+  become: no
+  gather_facts: no
+  tasks:
+
+  - name: Download the image
+    get_url:
+      url: https://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1805.qcow2.xz
+      checksum: sha256:b34859272e29ddcc3a1f27a214cef75ba661ec2a28d956cad46cd132b54b00c2
+      dest: ./sandbox.qcow2.xz
+
+  - name: Uncompress the image
+    command: xz --uncompress --keep --force sandbox.qcow2.xz
+    args:
+      creates: ./sandbox.qcow2
+
+  - name: Resize the image
+    command: qemu-img resize sandbox.qcow2 20G
+
+  - name: Create the virtual machine
+    command: |-
+      virt-install
+      --connect qemu:///system
+      --name sandbox
+      --import
+      --ram 8192
+      --vcpus 1
+      --os-type linux
+      --os-variant centos7.0
+      --disk path=sandbox.qcow2,device=disk
+      --disk path=cloud-init.iso,device=cdrom
+      --noautoconsole

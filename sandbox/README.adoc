@@ -1,0 +1,197 @@
+= Sandbox
+
+This directory contains files and scripts used to create a _sandbox_ virtual
+machine that contains a basic _OpenShift_ cluster that can be used to deploy and
+test the application.
+
+NOTE: This instructions are mostly intended for Linux distributions like _RHEL_
+and _CentOS_. They will likely need adjustments for other distributons.
+
+== Creating the virtual machine with _libvirt_
+
+To create the virtual machine with _libvirt_ you will need to have working
+installations of _libvirt_, _Python 3_, and _Ansible_, as well as other smaller
+utilities. Make sure that you have the _EPEL_ package repository enabled, and
+install the required packages:
+
+```
+# yum install -y epel-release
+
+# yum install -y \
+ansible \
+genisoimage \
+libvirt \
+python34 \
+qemu-kvm \
+virt-install
+```
+
+The installation script assumes that you have a virtual network with the
+`192.168.122.0/24` address range, and that the `192.168.122.100` address is
+available for the virtual machine. This address range is the default created
+when _libvirt_ is installed, so you won't have to change it unless you modified
+the _libvirt_configuration.
+
+The installation script also assumes that you have an entry in your DNS server
+or in your `/etc/hosts` file for the `sandbox.local` host name and the
+`192.168.122.100` address.
+
+If these assumptions are correct, then you can create the virtual machine
+running the `build.py` script with the `libvirt` option:
+
+```
+$ ./build.py libvirt
+```
+
+If you need to change any settings you will need to call the `build.py` script
+with additional options. For example, if you need to use a diferent host name
+and network configuration:
+
+```
+$ ./build.py libvirt \
+--sandbox-hostname mysandbox.example.com \
+--sandbox-address 192.168.100.100 \
+--sandbox-netmask 255.255.255.0 \
+--sandbox-gateway 192.168.100.1 \
+--sandbox-dns-search example.com \
+--sandbox-dns-servers 192.168.100.1
+```
+
+Run `./build.py libvirt --help` for a complete list of options.
+
+The `build.py` script will base operating system image, create the virtual
+machine and install _OpenShift_ with a configuration tailored for this project.
+The resulting image will be in the `sandbox.qcow2` file.
+
+The virtual machine will not be stopped after finishing the installation, so you
+can do further adjustments, if you wish. It can then be stopped, and the image
+file `sandbox.qcow2` can then be imported it in any virtualization platform that
+supports the _QCOW2_ image format.
+
+== Running the virtual machine with _libvirt_
+
+To run the virtual machine with _libvirt_ get the `sandbox.qcow2` file and use
+the `virt-install` command to import it. For example, lets assume that the
+compressed image file is available in the following URL:
+
+```
+http://files.example.com/images/sandbox.qcow2.xz
+```
+
+To download and import the image you can use the following commands:
+
+```
+# curl \
+--output sandbox.qcow2.xz \
+http://files.example.com/images/sandbox.qcow2.xz
+
+# xz \
+--decompress \
+--keep \
+sandbox.qcow2.xz
+
+# virt-install \
+--connect qemu:///system \
+--name sandbox \
+--import \
+--ram 8192 \
+--vcpus 1 \
+--os-type linux \
+--os-variant centos7.0 \
+--disk path=sandbox.qcow2,device=disk
+```
+
+If at any point you want to go back to the initial installation you can just
+remove the virtual machine, including the `sandbox.qcow2` file, and then repeat
+the `xz` and `virt-install` command.
+
+== Creating the virtual machine with _oVirt_
+
+In order to use the _oVirt_ API you will need the _oVirt_ Python SDK and the
+_oVirt_ _Ansible_ roles, as well as some other smaller utitities. Make sure you
+have all the packages installed:
+
+```
+# yum install -y epel-release
+# yum install -y http://resources.ovirt.org/pub/yum-repo/ovirt-release42.rpm
+
+# yum install -y \
+ansible \
+genisoimage \
+python-ovirt-engine-sdk4 \
+python34
+```
+
+To create the virtual machine in an _oVirt_ environment you will first make sure
+that you have a template that contains the operating system and the `cloud-init`
+package. That isn't described in this document.
+
+Then you will have to run the `build.py` script with additional options, to
+specify the details of the connection to the _oVirt_ API, the template, and the
+cluster. For example:
+
+```
+$ ./build.py ovirt \
+--ovirt-url https://myovirt.example.com/ovirt-engine/api \
+--ovirt-user admin@internal \
+--ovirt-password mypassword \
+--ovirt-ca-file myca.pem \
+--ovirt-template mytemplate \
+--ovirt-cluster mycluster \
+--sandbox-hostname mysandbox.example.com \
+--sandbox-address 192.168.100.100 \
+--sandbox-netmask 255.255.255.0 \
+--sandbox-gateway 192.168.100.1 \
+--sandbox-dns-search example.com \
+--sandbox-dns-servers 192.168.100.1
+```
+
+Run `./build.py ovirt --help` for a complete list of options.
+
+The virtual machine will not be stopped after finishing the installation, so you
+can do further adjustments, if you wish. It can then be stopped, and then you
+can make a template from it, so that next time you need it you can create it
+from the template instead of installing it from scratch.
+
+== Accessing the virtual machine
+
+To access the virtual machine with SSH use the `admin` user:
+
+```
+$ ssh admin@sandbox.local
+```
+
+The password is `redhat123`, unless you change it with the `--sandbox-password`
+option of the installation script.
+
+If you prefer to use your public SSH key, then you can add the `--sandbox-key`
+option to the installation script:
+
+```
+$ ./build.py \
+--sandbox-key "$(cat ~/.ssh/id_rsa.pub)" \
+...
+```
+
+Once you are logged in as `admin` you can become `root` with `sudo -i`.
+
+== Managing the cluster with the _oc_ tool
+
+To manage the cluster you will need the _oc_ command and the cluster
+administrator credentials. You can copy them from the virtual machine:
+
+```
+$ mkdir -p ~/bin
+$ scp admin@sandbox.local:/bin/oc ~/bin/.
+
+$ mkdir -p ~/.kube
+$ scp admin@sandbox.local:.kube/config ~/.kube/config
+```
+
+Then you should be able to run the `oc` command, for example:
+
+```
+$ oc get pods --all-namespaces
+NAMESPACE   NAME             READY     STATUS    RESTARTS   AGE
+default     router-1-7mj96   1/1       Running   1          6m
+```

@@ -1,0 +1,11 @@
+*.iso
+*.pem
+*.qcow2
+*.retry
+*.xz
+install_key
+install_key.pub
+installer/
+inventory.ini
+meta-data
+user-data
