@@ -26,6 +26,7 @@ oc new-project dedicated-portal
 oc process \
   --filename="template.yml" \
   --param=NAMESPACE="dedicated-portal" \
+  --param=VERSION="latest" \
   --param=DOMAIN="example.com" \
   --param=PASSWORD="redhat123" \
 | \
