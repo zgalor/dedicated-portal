@@ -77,6 +77,10 @@ pipeline {
   }
 
   post {
+    failure {
+      slackSend color: "danger", message: "Deployment pipeline failed, see the details <${env.BUILD_URL}|here>."
+    }
+
     always {
       cleanWs()
     }
