@@ -83,8 +83,26 @@ objects:
     selector:
       app: messaging-service
     ports:
-    - port: 61613
+    - name: console
+      port: 8161
+      targetPort: 8161
+    - name: acceptor
+      port: 61613
       targetPort: 61613
+
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: messaging-console
+  spec:
+    host: messaging-console.${DOMAIN}
+    to:
+      kind: Service
+      name: messaging-service
+    port:
+      targetPort: console
+    tls:
+      termination: passthrough
 
 - apiVersion: v1
   kind: Route
@@ -95,6 +113,8 @@ objects:
     to:
       kind: Service
       name: messaging-service
+    port:
+      targetPort: acceptor
     tls:
       termination: passthrough
 

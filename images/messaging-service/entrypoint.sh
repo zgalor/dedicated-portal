@@ -27,10 +27,15 @@ exec java \
   -Dartemis.instance.etc="/etc/artemis" \
   -Dartemis.instance="/var/lib/artemis" \
   -Ddata.dir="/var/lib/artemis/data" \
+  -Dhawtio.offline="true" \
+  -Dhawtio.realm="activemq" \
+  -Dhawtio.role="admins" \
+  -Dhawtio.rolePrincipalClasses="org.apache.activemq.artemis.spi.core.security.jaas.RolePrincipal" \
   -Djava.io.tmpdir="/var/lib/artemis/tmp" \
   -Djava.library.path="/usr/share/artemis/bin/lib/linux-$(uname -m)" \
   -Djava.security.auth.login.config="/etc/artemis/login.config" \
   -Djava.util.logging.manager="org.jboss.logmanager.LogManager" \
+  -Djolokia.policyLocation="file:/etc/artemis/jolokia-access.xml" \
   -Dlogging.configuration="file:/etc/artemis/logging.properties" \
   org.apache.activemq.artemis.boot.Artemis \
   run

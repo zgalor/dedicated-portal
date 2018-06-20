@@ -34,7 +34,6 @@ tar -xf artemis.tar.gz
 # Remove the things that we don't want to install:
 pushd apache-artemis-*
   rm -rf examples
-  rm -rf web
   rm lib/artemis-amqp-protocol-*.jar
   rm lib/artemis-hornetq-protocol-*.jar
   rm lib/artemis-mqtt-protocol-*.jar

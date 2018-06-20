@@ -17,6 +17,24 @@ limitations under the License.
 -->
 
 <broker xmlns="http://activemq.org/schema">
+
+   <!-- Authentication domain: -->
    <jaas-security domain="activemq"/>
+
+   <!-- Broker configuration: -->
    <server configuration="file:/etc/artemis/broker.xml"/>
+
+   <!-- Console configuration: -->
+   <web
+     bind="https://0.0.0.0:8161"
+     path="web"
+     keyStorePath="/etc/artemis/service.p12"
+     keyStorePassword="redhat123">
+
+     <app url="activemq-branding" war="activemq-branding.war"/>
+     <app url="artemis-plugin" war="artemis-plugin.war"/>
+     <app url="console" war="console.war"/>
+
+   </web>
+
 </broker>

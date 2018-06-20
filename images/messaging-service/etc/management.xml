@@ -24,19 +24,19 @@ limitations under the License.
       <entry domain="hawtio"/>
     </whitelist>
     <default-access>
-      <access method="list*" roles="amq"/>
-      <access method="get*" roles="amq"/>
-      <access method="is*" roles="amq"/>
-      <access method="set*" roles="amq"/>
-      <access method="*" roles="amq"/>
+      <access method="list*" roles="admins"/>
+      <access method="get*" roles="admins"/>
+      <access method="is*" roles="admins"/>
+      <access method="set*" roles="admins"/>
+      <access method="*" roles="admins"/>
     </default-access>
     <role-access>
       <match domain="org.apache.activemq.artemis">
-        <access method="list*" roles="amq"/>
-        <access method="get*" roles="amq"/>
-        <access method="is*" roles="amq"/>
-        <access method="set*" roles="amq"/>
-        <access method="*" roles="amq"/>
+        <access method="list*" roles="admins"/>
+        <access method="get*" roles="admins"/>
+        <access method="is*" roles="admins"/>
+        <access method="set*" roles="admins"/>
+        <access method="*" roles="admins"/>
       </match>
     </role-access>
   </authorisation>

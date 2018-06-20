@@ -38,6 +38,8 @@ RUN \
     /tmp/setup.sh && \
     rm -rf /tmp/*
 
-EXPOSE 61613 61616
+# 8161 - Administration console.
+# 61613 - STOMP acceptor.
+EXPOSE 8161 61613
 
 CMD ["/root/entrypoint.sh"]
