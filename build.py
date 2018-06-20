@@ -18,7 +18,6 @@
 #
 
 import argparse
-import hashlib
 import os
 import os.path
 import re
@@ -26,7 +25,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import urllib.request
 
 # The import path of the project:
 IMPORT_PATH = "github.com/container-mgmt/dedicated-portal"
@@ -51,23 +49,6 @@ VARIABLE_RE = re.compile(
 TEMPLATE_RE = re.compile(
     r"""
     \.in$
-    """,
-    re.VERBOSE
-)
-
-# The regular expression to extract the digests, URLs and output file names
-# from from the 'Downloads' files:
-DOWNLOAD_RE = re.compile(
-    r"""
-    ^
-    \s*
-    (?P<digest>[^\s]+)
-    \s+
-    (?P<url>[^\s]+)
-    \s+
-    (?P<output>[^\s]+)
-    \s*
-    $
     """,
     re.VERBOSE
 )
@@ -479,24 +460,6 @@ def ensure_image(image_name):
                     shutil.copyfile(src_path, dst_path)
                 shutil.copymode(src_path, dst_path)
 
-        # Download other source files that are be needed by the image, as
-        # specified in the 'Downloads' file:
-        downloads_path = os.path.join(tmp_dir, "Downloads")
-        if os.path.exists(downloads_path):
-            with open(downloads_path) as fd:
-                for line in fd:
-                    match = DOWNLOAD_RE.search(line)
-                    if match is not None:
-                        url = match.group("url")
-                        digest = match.group("digest")
-                        output = match.group("output")
-                        src_path = download_file(url, digest)
-                        dst_path = os.path.join(tmp_dir, output)
-                        say("Copy file downloaded from URL '%s' to '%s'" % (
-                            url, dst_path
-                        ))
-                        shutil.copyfile(src_path, dst_path)
-
         # Copy the binaries to the temporary directory, as most probably the
         # image will want to use them:
         for cmd_file in cmd_files:
@@ -509,8 +472,8 @@ def ensure_image(image_name):
             shutil.copyfile(cmd_file, dst_file)
             shutil.copymode(cmd_file, dst_file)
 
-        # Copy the web applications to the temporary directory, as most probably
-        # the image will want to use them:
+        # Copy the web applications to the temporary directory, as most
+        # probably the image will want to use them:
         for build_dir in app_dirs:
             app_dir = os.path.dirname(build_dir)
             app_name = os.path.basename(app_dir)
@@ -633,54 +596,6 @@ def process_template(template, variables={}):
         lambda match: local_vars.get(match.group("name")),
         template
     )
-
-
-def download_file(url, digest):
-    """
-    Downloads the content of the given URL, verifies that the SHA265 digest
-    is correct, and returns the absolute path of where the file is stored.
-    """
-    # To save time and IO downloads are saved to the '.downloads' directory
-    # of the project, so first we need to make sure that it exists:
-    project_dir = ensure_project_dir()
-    cache_dir = os.path.join(project_dir, '.downloads')
-    if not os.path.exists(cache_dir):
-        os.mkdir(cache_dir)
-
-    # If the file is already in the cache then we don't need to do anything
-    # else, just return the location:
-    cache_file = os.path.join(cache_dir, digest)
-    if os.path.exists(cache_file):
-        return cache_file
-
-    # Download the URL to a temporary file, and calculate the digest while
-    # at it:
-    say("Downloading file from URL '%s'" % url)
-    tmp_file = cache_file + ".tmp"
-    tmp_digest = hashlib.sha256()
-    with urllib.request.urlopen(url) as url_fd, open(tmp_file, "wb") as tmp_fd:
-        while True:
-            data = url_fd.read(8192)
-            if len(data) == 0:
-                break
-            tmp_fd.write(data)
-            tmp_digest.update(data)
-    tmp_digest = tmp_digest.hexdigest()
-
-    # Compare the digest provided by the caller with the calculated one:
-    if tmp_digest != digest:
-        os.remove(tmp_file)
-        raise Exception(
-            "The calculated digest '%s' for url '%s' is different to the "
-            "expected '%s'" % (tmp_digest, url, digest)
-        )
-
-    # Rename the temporary file to the definitive one:
-    os.rename(tmp_file, cache_file)
-
-    # The download worked correctly, and the digest is good, just return
-    # the path of the cache file:
-    return cache_file
 
 
 def build_binaries():

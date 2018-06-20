@@ -16,10 +16,27 @@
 
 FROM centos:7
 
-RUN yum install -y java-1.8.0-openjdk-headless libaio && yum clean all
-COPY artemis.tar.gz setup.sh entrypoint.sh etc /tmp/
-ADD etc /tmp/etc/
-RUN /tmp/setup.sh && rm -rf /tmp/*
+RUN \
+    yum install -y \
+        java-1.8.0-openjdk-headless \
+        libaio \
+        wget \
+        && \
+    yum clean all
+
+COPY \
+    setup.sh \
+    entrypoint.sh \
+    etc \
+    /tmp/
+
+ADD \
+    etc \
+    /tmp/etc/
+
+RUN \
+    /tmp/setup.sh && \
+    rm -rf /tmp/*
 
 EXPOSE 61613 61616
 
