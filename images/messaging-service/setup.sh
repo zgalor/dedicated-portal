@@ -23,6 +23,7 @@ cd /tmp
 
 # Download the tarball:
 wget \
+  --quiet \
   --output-document artemis.tar.gz \
   "https://www.apache.org/dyn/closer.cgi?filename=activemq/activemq-artemis/2.6.0/apache-artemis-2.6.0-bin.tar.gz&action=download"
 echo "125bdc3516fd051221d06ea2faf26625fb833e15904cccba5e797f2405769ec8 artemis.tar.gz" | sha256sum --check
