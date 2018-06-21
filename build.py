@@ -86,9 +86,9 @@ def cache(function):
     cache = dict()
 
     def helper(*key):
-        try:
+        if key in cache:
             value = cache[key]
-        except KeyError:
+        else:
             value = function(*key)
             cache[key] = value
         return value
