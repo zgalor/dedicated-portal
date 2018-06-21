@@ -3,7 +3,7 @@
 image:https://travis-ci.org/container-mgmt/dedicated-portal.svg?branch=master["Build Status", link="https://travis-ci.org/container-mgmt/dedicated-portal"]
 
 This package provides an application that simplifies the creation and
-management of OpenShift clusters.
+management of _OpenShift_ clusters.
 
 == Building
 
@@ -14,36 +14,39 @@ To build the container images run the `make images` command.
 
 == Deploying to an existing cluster
 
-To deploy the application to an OpenShift cluster you will first need to
+To deploy the application to an _OpenShift_ cluster you will first need to
 build the images and upload them to the image registry used by the
 cluster. The images can be built and exported to `.tar` files files with
 the `make tars` command:
 
-```
+[source]
+----
 $ make tars
 $ ls *.tar | sort
-dedicated-portal_clusters-service_0.0.0.tar
-dedicated-portal_customers-service_0.0.0.tar
-dedicated-portal_customers-portal_0.0.0.tar
-dedicated-portal_messaging-service_0.0.0.tar
-```
+dedicated-portal_clusters-service_latest.tar
+dedicated-portal_customers-service_latest.tar
+dedicated-portal_customers-portal_latest.tar
+dedicated-portal_messaging-service_latest.tar
+----
 
-Those `.tar` files can then be copied to the OpenShirt cluster, and
+Those `.tar` files can then be copied to the _OpenShift_ cluster, and
 uploaded to the image registry:
 
-```
+[source]
+----
 $ scp *.tar template.* myhost:.
 $ ssh root@myhost
-# docker load -i dedicated-portal_clusters-service_0.0.0.tar
-# docker load -i dedicated-portal_customers-service_0.0.0.tar
-# docker load -i dedicated-portal_customers-portal_0.0.0.tar
-# docker load -i dedicated-portal_messaging-service_0.0.0.tar
-```
+# docker load -i dedicated-portal_clusters-service_latest.tar
+# docker load -i dedicated-portal_customers-service_latest.tar
+# docker load -i dedicated-portal_customers-portal_latest.tar
+# docker load -i dedicated-portal_messaging-service_latest.tar
+----
 
 Then the `template.sh` script can be used to create and populate the
 `dedicated-portal` namespace:
 
-```
+[source]
+----
 $ ./template.sh
 $ oc get pods -n dedicated-portal
 NAME                                READY  STATUS   RESTARTS  AGE
@@ -53,25 +56,30 @@ customers-db-6cc7fc8c49-7mh7t       1/1    Running  0         1m
 customers-portal-8474a9d5b7-6j1qt   1/1    Running  0         1m
 customers-service-7dfdf5b6b5-hqznw  1/1    Running  0         1m
 messaging-service-7474b9d5b7-6n2qt  1/1    Running  0         1m
-```
+----
 
 To undeploy the application remove the `dedicated-portal` namespace:
 
-```
+[source]
+----
 $ oc delete namespace dedicated-portal
-```
+----
 
 == Deploying using oc cluster up
 
 Run:
-....
+
+[source]
+----
 ./hack/cluster-up.sh
-....
+----
+
 [NOTE]
 ====
 Getting accessible routes is possible by setting the template parameter:
 
-....
+[source]
+----
 # DOMAIN="127.0.0.1.nip.io"
-....
+----
 ====
