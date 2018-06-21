@@ -16,18 +16,10 @@ limitations under the License.
 
 package main
 
-import (
-	"flag"
-)
-
-func main() {
-	var etcdClusterEndpoint string
-	flag.StringVar(&etcdClusterEndpoint, "etcd-endpoint", "localhost:2379",
-		"The endpoint running the etcd data store (by default it is localhost:2379)")
-
-	service, _ := NewEtcdCustomersService(etcdClusterEndpoint)
-	defer service.Close()
-
-	server := InitServer(service)
-	server.Run()
+// Customer struct is the internatl object representing information on
+// a single Customer.
+type Customer struct {
+	ID            string   `json:"id"`
+	Name          string   `json:"name"`
+	OwnedClusters []string `json:"owned_clusters"`
 }

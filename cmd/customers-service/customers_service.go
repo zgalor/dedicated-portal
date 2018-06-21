@@ -16,18 +16,17 @@ limitations under the License.
 
 package main
 
-import (
-	"flag"
-)
+// CustomersService is an interface exposing a set of operations required for
+// running and operating the customers of the Openshift Dedicated Portal.
+type CustomersService interface {
+	List(args *ListArguments) (*CustomersList, error)
+	Add(customer Customer) (*Customer, error)
+	Get(id string) (*Customer, error)
+	Close()
+}
 
-func main() {
-	var etcdClusterEndpoint string
-	flag.StringVar(&etcdClusterEndpoint, "etcd-endpoint", "localhost:2379",
-		"The endpoint running the etcd data store (by default it is localhost:2379)")
-
-	service, _ := NewEtcdCustomersService(etcdClusterEndpoint)
-	defer service.Close()
-
-	server := InitServer(service)
-	server.Run()
+// ListArguments are arguments relevant for listing objects
+type ListArguments struct {
+	Page int64
+	Size int64
 }
