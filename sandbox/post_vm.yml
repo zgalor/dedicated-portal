@@ -1,0 +1,21 @@
+---
+- name: Tasks to run in the VM after installing the cluster
+  hosts: sandbox
+  gather_facts: no
+  remote_user: admin
+  become: yes
+  tasks:
+
+  - name: Create the YAML file for the persistent volumes
+    template:
+       src: volumes.j2
+       dest: /root/volumes.yml
+
+  - name: Create the persistent volumes
+    command: oc apply -f /root/volumes.yml
+
+  - name: Remove the SSH key used during setup
+    authorized_key:
+      user: admin
+      key: "{{ lookup('file', 'install_key.pub') }}"
+      state: absent

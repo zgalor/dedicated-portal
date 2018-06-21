@@ -219,10 +219,10 @@ def build(env):
     run_playbook("clone_installer.yml")
     run_playbook("prepare_cloud_init.yml")
     run_playbook("prepare_{env}.yml".format(env=env))
-    run_playbook("prepare_vm.yml")
+    run_playbook("pre_vm.yml")
     run_playbook("installer/playbooks/prerequisites.yml")
     run_playbook("installer/playbooks/deploy_cluster.yml")
-    run_playbook("clean_vm.yml")
+    run_playbook("post_vm.yml")
 
 
 def build_libvirt():
