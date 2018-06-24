@@ -78,6 +78,15 @@
   version = "v1.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/lib/pq"
+  packages = [
+    ".",
+    "oid"
+  ]
+  revision = "90697d60dd844d5ef6ff15135d0203f65d2f53b8"
+
+[[projects]]
   name = "github.com/segmentio/ksuid"
   packages = ["."]
   revision = "112f929a3020abfcd06b77c963ec919130796a35"
@@ -171,6 +180,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "baed24f61cfef3a235fa9e08070c10c87e2e2b324657c80ef01876ec7258049d"
+  inputs-digest = "38c747d0e7bbfc42c4eebe0ca124f79f57028585a42acce1314ee2075c19ce77"
   solver-name = "gps-cdcl"
   solver-version = 1
