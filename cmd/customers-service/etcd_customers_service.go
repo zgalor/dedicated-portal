@@ -20,10 +20,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/segmentio/ksuid"
-	"time"
 )
 
 // EtcdCustomersService is a struct implementing the customer service interface,
@@ -165,7 +166,7 @@ func (service *EtcdCustomersService) paginateCustomers(args *ListArguments, tota
 func (service *EtcdCustomersService) collectCustomerItems(size, page, total, firstIndex, lastIndex int64, keyValues []*mvccpb.KeyValue) ([]*Customer, error) {
 	items := make([]*Customer, size)
 	for i := firstIndex; i < lastIndex && i < total; i++ {
-		err := json.Unmarshal(keyValues[i].Value, items[i])
+		err := json.Unmarshal(keyValues[i].Value, &items[i])
 		if err != nil {
 			return nil, err
 		}
