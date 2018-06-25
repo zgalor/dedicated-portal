@@ -33,7 +33,7 @@ type CustomersService interface {
 
 	// Get returns a pointer to customer with id supplied or error if an
 	// error occured.
-	// If no such customer exist Get return pointer to nil and nil error.
+	// If no such customer exist Get returns nil pointer and nil error.
 	Get(id string) (*Customer, error)
 
 	// Close closes the service.
