@@ -1,0 +1,22 @@
+{# This template generates the script that will be passed to the 'targetcli' tool #}
+{# to configure the local iSCSI target. #}
+
+# Create sparse files that back the LUNs:
+cd /backstores/fileio
+{% for lun_index in range(sandbox_lun_count) %}
+create lun-{{ lun_index }} /storage/lun-{{ lun_index }} {{ sandbox_lun_size }}GB
+{% endfor %}
+
+# Create the target:
+cd /iscsi
+create {{ sandbox_target }}
+
+# Create the ACLs:
+cd /iscsi/{{ sandbox_target }}/tpg1/acls
+create {{ sandbox_initiator }}
+
+# Add the LUNs to the target:
+cd /iscsi/{{ sandbox_target }}/tpg1/luns
+{% for lun_index in range(sandbox_lun_count) %}
+create /backstores/fileio/lun-{{ lun_index }}
+{% endfor %}

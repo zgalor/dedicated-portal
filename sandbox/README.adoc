@@ -197,3 +197,46 @@ $ oc get pods --all-namespaces
 NAMESPACE   NAME             READY     STATUS    RESTARTS   AGE
 default     router-1-7mj96   1/1       Running   1          6m
 ```
+
+== Using the local _iSCSI_ storage
+
+In order to simplify usage of persistent volumes, the virtual machine contains
+an _iSCSI_ target with ten LUNs, each backed by an sparse file in the `/storage`
+directory.
+
+There are also ten persistent volumes already defined, one for each LUN:
+
+[source]
+----
+$ oc get pv -o custom-columns=NAME:.metadata.name,CAPACITY:.spec.capacity.storage
+NAME       CAPACITY
+volume-0   1Gi
+volume-1   1Gi
+volume-2   1Gi
+volume-3   1Gi
+volume-4   1Gi
+volume-5   1Gi
+volume-6   1Gi
+volume-7   1Gi
+volume-8   1Gi
+volume-9   1Gi
+----
+
+To use one of these volumes create a persistent volume claim like this:
+
+[source,yaml]
+----
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: my-claim
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+----
+
+The number and size of the LUNs can be changed using the `sandbox_lun_count` and
+`sandbox_lun_size` variables inside the `inventory.j2` file.

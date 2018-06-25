@@ -45,3 +45,11 @@ template_service_broker_install=false
 {% for name, value in args.items() %}
 {{ name }}="{{ value }}"
 {% endfor %}
+
+# Names of the iSCSI target and initiatior:
+sandbox_initiator=iqn.2018-06.local.sandbox:initiator
+sandbox_target=iqn.2018-06.local.sandbox:target
+
+# Number and size (in GiB) of LUNs to create in the iSCSI target:
+sandbox_lun_count=10
+sandbox_lun_size=1

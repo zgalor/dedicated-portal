@@ -1,5 +1,5 @@
 ---
-- name: Prepare the virtual machine
+- name: Tasks to run in the VM before installing the cluster
   hosts: sandbox
   gather_facts: no
   remote_user: admin
@@ -28,7 +28,10 @@
       - NetworkManager
       - docker
       - epel-release
+      - iscsi-initiator-utils
+      - python-rtslib
       - rsync
+      - targetcli
 
   - name: Add admin to the docker group
     user:
@@ -43,6 +46,26 @@
           "group": "dockerroot"
         }
 
+  - name: Set the iSCSI initiator name
+    copy:
+      content: "InitiatorName={{ sandbox_initiator }}"
+      dest: /etc/iscsi/initiatorname.iscsi
+
+  - name: Create the directory for iSCSI LUN backing files
+    file:
+      path: /storage
+      state: directory
+
+  - name: Generate the iSCSI target configuration script
+    template:
+      src: target.j2
+      dest: /root/target.txt
+
+  - name: Run the iSCSI target configuration script
+    shell: targetcli < /root/target.txt
+    args:
+      creates: /etc/target/saveconfig.json
+
   - name: Enable and start services
     systemd:
       name: "{{ item }}"
@@ -51,3 +74,4 @@
     with_items:
     - NetworkManager
     - docker
+    - target

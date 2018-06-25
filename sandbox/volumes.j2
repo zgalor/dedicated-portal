@@ -1,0 +1,22 @@
+{# This template generates the YAML that will be passed to the 'oc' tool to #}
+{# create the persistent volumes corresponding to the iSCSI LUNs. #}
+
+{% for lun_index in range(sandbox_lun_count) %}
+---
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: volume-{{ lun_index }}
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: {{ sandbox_lun_size }}Gi
+  iscsi:
+    fsType: xfs
+    iqn: {{ sandbox_target }}
+    lun: {{ lun_index }}
+    targetPortal: 127.0.0.1
+
+{% endfor %}
