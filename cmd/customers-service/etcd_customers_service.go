@@ -94,7 +94,8 @@ func (service *EtcdCustomersService) Get(id string) (*Customer, error) {
 	// retrieve customer object by it's id.
 	response, err := service.cli.Get(context.Background(), id)
 	if err != nil {
-		return nil, err
+		// If could not find customer matching such id return nil pointer and nil error.
+		return nil, nil
 	}
 
 	// We expect only one Customer per ID since ID's are unique.
