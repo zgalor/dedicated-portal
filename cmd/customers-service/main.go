@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 )
 
 func main() {
@@ -25,7 +26,10 @@ func main() {
 	flag.StringVar(&etcdClusterEndpoint, "etcd-endpoint", "localhost:2379",
 		"The endpoint running the etcd data store (by default it is localhost:2379)")
 
-	service, _ := NewEtcdCustomersService(etcdClusterEndpoint)
+	service, err := NewEtcdCustomersService(etcdClusterEndpoint)
+	if err != nil {
+		panic(fmt.Sprintf("Can't connect to etcd: %v", err))
+	}
 	defer service.Close()
 
 	server := InitServer(service)
