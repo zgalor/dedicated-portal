@@ -45,5 +45,5 @@ func main() {
 	}
 
 	fmt.Println("Created server")
-
+	<-stopCh // wait until requested to stop.
 }
