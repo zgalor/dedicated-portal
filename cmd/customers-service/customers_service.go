@@ -19,9 +19,24 @@ package main
 // CustomersService is an interface exposing a set of operations required for
 // running and operating the customers of the Openshift Dedicated Portal.
 type CustomersService interface {
+
+	// List returns a pointer to CustomerList or error in case some error occured.
+	// If list arguments are provided list will return the intended customers list.
+	// If nil is supplied list will return all customers.
 	List(args *ListArguments) (*CustomersList, error)
+
+	// Add creates a customer and returns the newly created customer or error
+	// in case some error occured.
+	// It receives a Customer object with its Name and (possibly) OwnedClusters,
+	// and creates a new Customer based on the supplied Customer parameter.
 	Add(customer Customer) (*Customer, error)
+
+	// Get returns a pointer to customer with id supplied or error if an
+	// error occured.
+	// If no such customer exist Get return pointer to nil and nil error.
 	Get(id string) (*Customer, error)
+
+	// Close closes the service.
 	Close()
 }
 
