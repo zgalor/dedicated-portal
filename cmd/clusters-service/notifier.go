@@ -26,7 +26,7 @@ func (n Notifier) SendNotification(message, destinationName string) error {
 		BrokerPort:   61613,
 		UserName:     "clusters-service",
 		UserPassword: "redhat123",
-		UseTLS:       false,
+		UseTLS:       true,
 		InsecureTLS:  true,
 	})
 	if err != nil {
