@@ -12,6 +12,10 @@ go_import_path: github.com/container-mgmt/dedicated-portal
 
 install:
 - go get github.com/golang/dep/cmd/dep
+- go get golang.org/x/lint/golint
+- go get github.com/client9/misspell/cmd/misspell
 
 script:
 - make images
+- make lint
+- misspell -error cmd/** pkg/** README.adoc

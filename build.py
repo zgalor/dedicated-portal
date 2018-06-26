@@ -125,7 +125,6 @@ def go_tool(*args):
     """
     # Make sure that the required directories exist:
     go_path = ensure_go_path()
-    project_dir = ensure_project_dir()
     project_link = ensure_project_link()
 
     # Modify the environment so that the Go tool will find the project files
@@ -612,6 +611,26 @@ def build_images():
             ensure_image_tar(image_tag)
 
 
+def lint():
+    """
+    Runs the 'golint' tool on all the source files.
+    """
+    go_tool(
+        "golint",
+        "-min_confidence", "0.9",
+        "-set_exit_status",
+        "./pkg/...",
+        "./cmd/...",
+    )
+
+
+def fmt():
+    """
+    Formats all the source files of the project using the 'gofmt' tool.
+    """
+    go_tool("gofmt", "-s", "-l", "-w", "./pkg/", "./cmd/")
+
+
 def main():
     # Create the top level command line parser:
     parser = argparse.ArgumentParser(
@@ -639,6 +658,14 @@ def main():
     # Create the parser for the 'apps' command:
     apps_parser = subparsers.add_parser("apps")
     apps_parser.set_defaults(func=build_apps)
+
+    # Create the parser for the 'lint' command:
+    lint_parser = subparsers.add_parser("lint")
+    lint_parser.set_defaults(func=lint)
+
+    # Create the parser for the 'fmt' command:
+    fmt_parser = subparsers.add_parser("fmt")
+    fmt_parser.set_defaults(func=fmt)
 
     # Create the parser for the 'images' command:
     images_parser = subparsers.add_parser('images')

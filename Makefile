@@ -37,6 +37,14 @@ tars:
 tgzs:
 	./build.py images --save --compress
 
+.PHONY: lint
+lint:
+	./build.py lint
+
+.PHONY: fmt
+fmt:
+	./build.py fmt
+
 .PHONY: clean
 clean:
 	rm -rf .gopath vendor *.tar *.tar.gz

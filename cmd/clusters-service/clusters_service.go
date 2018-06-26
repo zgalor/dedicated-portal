@@ -42,7 +42,7 @@ func (cs GenericClustersService) List(args ListArguments) (result ClustersResult
 	result.Size = 1
 	result.Total = 1
 	result.Items = []Cluster{
-		Cluster{
+		{
 			Name:              "Static Cluster",
 			UUID:              "8a83de13-7a3e-4928-828b-74ffede43964",
 			CreationTimestamp: time.Now(),

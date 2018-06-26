@@ -16,6 +16,7 @@ type Server struct {
 	clusterService ClustersService
 }
 
+// NewServer creates a new server.
 func NewServer(stopCh <-chan struct{}, clusterService ClustersService) *Server {
 	server := new(Server)
 	server.stopCh = stopCh
