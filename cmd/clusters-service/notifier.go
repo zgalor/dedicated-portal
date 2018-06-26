@@ -23,7 +23,7 @@ func (n Notifier) SendNotification(message, destinationName string) error {
 	var err error
 
 	// Set the clients variables before we can open it.
-	c, err = stomp.NewConnection(&stomp.ConnectionBuilder{
+	c, err = stomp.NewConnection(&client.ConnectionSpec{
 		// Global options:
 		BrokerHost:   "messaging-service.dedicated-portal.svc",
 		BrokerPort:   61613,
@@ -36,14 +36,12 @@ func (n Notifier) SendNotification(message, destinationName string) error {
 		return err
 	}
 	// Connect to the messaging service:
-	err = c.Open()
-	if err != nil {
-		return err
-	}
 	defer c.Close()
 	m := client.Message{
 		ContentType: "text/plain",
-		Body:        message,
+		Data: client.MessageData{
+			"text": message,
+		},
 	}
 	err = c.Publish(m, destinationName)
 	if err != nil {
