@@ -71,6 +71,5 @@ Run:
 
 [source]
 ----
-./hack/cluster-up.sh
+./hack/cluster-restart.sh
 ----
-
