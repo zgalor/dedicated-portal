@@ -17,9 +17,14 @@ limitations under the License.
 package main
 
 import (
-	"github.com/gorilla/mux"
+	"flag"
+	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/golang/glog"
+	"github.com/gorilla/mux"
+	"github.com/spf13/cobra"
 )
 
 // Server serves REST API requests on clusters.
@@ -28,22 +33,69 @@ type Server struct {
 	router  *mux.Router
 }
 
+var serveArgs struct {
+  host string
+  port int
+  etcdEndpoint string
+}
+
+var serveCmd = &cobra.Command{
+	Use:   "serve",
+	Short: "Serve a customers service serrvice",
+	Long:  "Serve a customers service serrvice.",
+	Run:   runServe,
+}
+
+func init() {
+	flags := serveCmd.Flags()
+	flags.StringVar(
+		&serveArgs.host,
+		"host",
+		"0.0.0.0",
+		"The IP address or port number of the server.",
+	)
+	flags.IntVar(
+		&serveArgs.port,
+		"port",
+		8000,
+		"The port number of the server.",
+	)
+	flag.StringVar(
+		&serveArgs.etcdEndpoint,
+		"etcd-endpoint",
+		"localhost:2379",
+		"The endpoint running the etcd data store.",
+	)
+}
+
 // InitServer is a constructor for the Server struct.
-func InitServer(service CustomersService) (server *Server) {
+func initServer(service CustomersService) (server *Server) {
 	server = new(Server)
 	server.router = mux.NewRouter()
 	server.service = service
-	initRoutes(server)
 	return server
 }
 
-func initRoutes(server *Server) {
+func runServe(cmd *cobra.Command, args []string) {
+	service, err := NewEtcdCustomersService(serveArgs.etcdEndpoint)
+	if err != nil {
+		panic(fmt.Sprintf("Can't connect to etcd: %v", err))
+	}
+	defer service.Close()
+
+	// Create server URL.
+	serverURL := fmt.Sprintf("%s:%d", serveArgs.host, serveArgs.port)
+
+	// Inform user we are starting.
+	glog.Infof("Starting customers-service server at %s.", serverURL)
+
+	// Start server.
+	server := initServer(service)
+
+	// Init route table
 	server.router.HandleFunc("/customers", server.getAllCustomers).Methods("GET")
 	server.router.HandleFunc("/customers", server.addCustomer).Methods("POST")
 	server.router.HandleFunc("/customers/{id}", server.getCustomerByID).Methods("GET")
-}
 
-// Run starts the service REST API
-func (server *Server) Run() {
-	log.Fatal(http.ListenAndServe(":8080", server.router))
+	log.Fatal(http.ListenAndServe(serverURL, server.router))
 }

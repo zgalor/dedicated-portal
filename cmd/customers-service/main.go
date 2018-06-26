@@ -18,20 +18,39 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"os"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
-func main() {
-	var etcdClusterEndpoint string
-	flag.StringVar(&etcdClusterEndpoint, "etcd-endpoint", "localhost:2379",
-		"The endpoint running the etcd data store (by default it is localhost:2379)")
-
-	service, err := NewEtcdCustomersService(etcdClusterEndpoint)
-	if err != nil {
-		panic(fmt.Sprintf("Can't connect to etcd: %v", err))
+var (
+	// Main command:
+	rootCmd = &cobra.Command{
+		Use:  "customers-service",
+		Long: "A tool that can service customers.",
 	}
-	defer service.Close()
+)
 
-	server := InitServer(service)
-	server.Run()
+func init() {
+	// Send logs to the standard error stream by default:
+	flag.Set("logtostderr", "true")
+
+	// Register the options that are managed by the 'flag' package, so that they will also be parsed
+	// by the 'pflag' package:
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+
+	// Register the subcommands:
+	rootCmd.AddCommand(serveCmd)
+}
+
+func main() {
+	// This is needed to make `glog` believe that the flags have already been parsed, otherwise
+	// every log messages is prefixed by an error message stating the the flags haven't been
+	// parsed.
+	flag.CommandLine.Parse([]string{})
+
+	// Execute the root command:
+	rootCmd.SetArgs(os.Args[1:])
+	rootCmd.Execute()
 }
