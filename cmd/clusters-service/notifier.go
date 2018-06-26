@@ -5,16 +5,19 @@ import (
 	"github.com/container-mgmt/messaging-library/pkg/connections/stomp"
 )
 
+// Notifier notify about things.
 type Notifier struct {
 	stopCh <-chan struct{}
 }
 
+// NewNotifier create a new notifier.
 func NewNotifier(stopCh <-chan struct{}) *Notifier {
 	notifier := new(Notifier)
 	notifier.stopCh = stopCh
 	return notifier
 }
 
+// SendNotification send a notification.
 func (n Notifier) SendNotification(message, destinationName string) error {
 	var c client.Connection
 	var err error

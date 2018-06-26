@@ -75,7 +75,7 @@ func (service *EtcdCustomersService) Add(customer Customer) (*Customer, error) {
 
 	// the resulting Customer is then marshal to []byte and converted to string -
 	// since etcd key-value pairs are strings ONLY.
-	// The key used as refrence for Customer objects is the customer id.
+	// The key used as reference for Customer objects is the customer id.
 	raw, err := json.Marshal(result)
 	if err != nil {
 		return nil, err
