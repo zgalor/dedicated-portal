@@ -17,10 +17,6 @@
 #
 
 oc cluster down
-for img in "messaging-service" "customers-service" "customers-portal" "clusters-service"
-do
-    sudo docker rmi "dedicated-portal/${img}:0.0.0" || true
-done
 make images
 oc cluster up
 oc login -u system:admin
