@@ -39,6 +39,7 @@ tgzs:
 
 .PHONY: lint
 lint:
+	./hack/verify.sh
 	./build.py lint
 
 .PHONY: fmt
