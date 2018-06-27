@@ -20,7 +20,6 @@
 import argparse
 import os
 import os.path
-import re
 import shutil
 import subprocess
 import sys
@@ -31,26 +30,6 @@ IMPORT_PATH = "github.com/container-mgmt/dedicated-portal"
 
 # The name and version of the project:
 PROJECT_NAME = "dedicated-portal"
-
-# The regular expression that will be used to replace variable names
-# enclused with {{...}} with their values:
-VARIABLE_RE = re.compile(
-    r"""
-    \{\{\s*
-    (?P<name>\w+)
-    s*\}\}
-    """,
-    re.VERBOSE
-)
-
-# The regular expression used to check if a file is a template, i.e, if its
-# name ends with '.in':
-TEMPLATE_RE = re.compile(
-    r"""
-    \.in$
-    """,
-    re.VERBOSE
-)
 
 # The list of tools that will be executed directly inside the Go environment
 # but without parsing the command line. For example, if the script is invoked
@@ -93,27 +72,6 @@ def cache(function):
             cache[key] = value
         return value
     return helper
-
-
-def find_paths(base, include=None, exclude=None):
-    """
-    Recursively finds the paths inside the 'base' directory whose complete
-    names match the 'include' regular expression and don't match the 'exclude'
-    regular expression. By default all paths are included and no path is
-    excluded.
-    """
-    include_re = re.compile(include) if include else None
-    exclude_re = re.compile(exclude) if exclude else None
-    paths = []
-    for root, _, names in os.walk(base):
-        for name in names:
-            path = os.path.join(root, name)
-            path = os.path.abspath(path)
-            should_include = include_re and include_re.search(path)
-            should_exclude = exclude_re and exclude_re.search(path)
-            if should_include and not should_exclude:
-                paths.append(path)
-    return paths
 
 
 def go_tool(*args):
@@ -417,34 +375,15 @@ def ensure_image(image_name):
     # The image will be built in a temporary directory, and we need to
     # make sure that it is removed once done:
     try:
-        tmp_dir = tempfile.mkdtemp(prefix=image_name + ".")
+        tmp_root = tempfile.mkdtemp(prefix=image_name + ".")
+        tmp_dir = os.path.join(tmp_root, "_")
         say("Created temporary directory '%s' to build image '%s'" % (
             tmp_dir, image_name
         ))
 
         # Copy files from the original image directory to the temporary
-        # directory, replacing templages (files ending with .in) with
-        # the result of processing them.
-        for src_dir, _, src_names in os.walk(image_dir):
-            rel_path = os.path.relpath(src_dir, image_dir)
-            dst_dir = os.path.join(tmp_dir, rel_path)
-            if not os.path.exists(dst_dir):
-                os.makedirs(dst_dir)
-            for src_name in src_names:
-                src_path = os.path.join(src_dir, src_name)
-                if TEMPLATE_RE.search(src_name) is not None:
-                    dst_name = TEMPLATE_RE.sub("", src_name)
-                    dst_path = os.path.join(dst_dir, dst_name)
-                    with open(src_path) as fd:
-                        src_content = fd.read()
-                    dst_content = process_template(src_content, image_vars)
-                    with open(dst_path, "w") as fd:
-                        fd.write(dst_content)
-                else:
-                    dst_name = src_name
-                    dst_path = os.path.join(dst_dir, dst_name)
-                    shutil.copyfile(src_path, dst_path)
-                shutil.copymode(src_path, dst_path)
+        # directory:
+        shutil.copytree(image_dir, tmp_dir)
 
         # Copy the binaries to the temporary directory, as most probably the
         # image will want to use them:
@@ -485,7 +424,7 @@ def ensure_image(image_name):
                 " ".join(args), result
             ))
     finally:
-        shutil.rmtree(tmp_dir)
+        shutil.rmtree(tmp_root)
 
     # Return the tag:
     return image_tag
@@ -539,49 +478,6 @@ def ensure_image_tar(image_tag, compress=False):
 
     # Return the name of the tar file:
     return tar_path
-
-
-@cache
-def ensure_global_variables():
-    """
-    Returns a dictionary containing a set of global variables that are useful
-    for processing templates.
-    """
-    return dict(
-        go_bin=ensure_go_bin(),
-        go_path=ensure_go_path(),
-        go_pkg=ensure_go_pkg(),
-        go_src=ensure_go_src(),
-        import_path=IMPORT_PATH,
-        project_dir=ensure_project_dir(),
-        project_link=ensure_project_link(),
-        project_name=PROJECT_NAME,
-        project_version=argv.version,
-    )
-
-
-def process_template(template, variables={}):
-    """
-    Process the given template text and returns the result. The processing
-    consists on replacing occurences of {{name}} with the value corresponding
-    to the 'name' key in the variables dictionary.
-
-    The given local variables dictionary will be merged with global variables
-    (see the 'ensure_global_variables' function) so that local variables
-    override global variables.
-    """
-    # Merge local and global variables, making sure that if there are local
-    # variables override global variables with the same name:
-    local_vars = dict(ensure_global_variables())
-    for name, value in variables.items():
-        local_vars[name] = value
-
-    # Replace all the occurences of {{...}} with the value of the
-    # corresponding variables:
-    return VARIABLE_RE.sub(
-        lambda match: local_vars.get(match.group("name")),
-        template
-    )
 
 
 def build_binaries():
