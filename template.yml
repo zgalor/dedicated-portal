@@ -249,8 +249,6 @@ objects:
         - name: service
           image: dedicated-portal/customers-service:${VERSION}
           imagePullPolicy: IfNotPresent
-          command:
-          - /usr/local/bin/customers-service
 
 - apiVersion: v1
   kind: Service
