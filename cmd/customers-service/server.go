@@ -17,9 +17,10 @@ limitations under the License.
 package main
 
 import (
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 // Server serves REST API requests on clusters.
