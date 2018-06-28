@@ -121,7 +121,6 @@ func (service *EtcdCustomersService) List(args *ListArguments) (*CustomersList, 
 
 	kvs := response.Kvs
 	customerList, err := service.paginateCustomers(args, response.Count, kvs)
-
 	if err != nil {
 		return nil, err
 	}
@@ -166,16 +165,13 @@ func (service *EtcdCustomersService) paginateCustomers(args *ListArguments, tota
 
 func (service *EtcdCustomersService) collectCustomerItems(size, page, total, firstIndex, lastIndex int64, keyValues []*mvccpb.KeyValue) ([]*Customer, error) {
 	items := make([]*Customer, size)
+	idx := 0
 	for i := firstIndex; i < lastIndex && i < total; i++ {
-		err := json.Unmarshal(keyValues[i].Value, &items[i])
+		err := json.Unmarshal(keyValues[i].Value, &items[idx])
+		idx++
 		if err != nil {
 			return nil, err
 		}
 	}
 	return items, nil
-}
-
-func (service *EtcdCustomersService) deleteAll() error {
-	_, err := service.cli.Delete(context.Background(), "", clientv3.WithPrefix())
-	return err
 }
