@@ -34,15 +34,15 @@ type Server struct {
 }
 
 var serveArgs struct {
-  host string
-  port int
-  etcdEndpoint string
+	host         string
+	port         int
+	etcdEndpoint string
 }
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
-	Short: "Serve a customers service serrvice",
-	Long:  "Serve a customers service serrvice.",
+	Short: "Serve the customers service service",
+	Long:  "Serve the customers service service.",
 	Run:   runServe,
 }
 
@@ -52,7 +52,7 @@ func init() {
 		&serveArgs.host,
 		"host",
 		"0.0.0.0",
-		"The IP address or port number of the server.",
+		"The IP address or host name of the server.",
 	)
 	flags.IntVar(
 		&serveArgs.port,
@@ -84,10 +84,10 @@ func runServe(cmd *cobra.Command, args []string) {
 	defer service.Close()
 
 	// Create server URL.
-	serverURL := fmt.Sprintf("%s:%d", serveArgs.host, serveArgs.port)
+	serverAddress := fmt.Sprintf("%s:%d", serveArgs.host, serveArgs.port)
 
 	// Inform user we are starting.
-	glog.Infof("Starting customers-service server at %s.", serverURL)
+	glog.Infof("Starting customers-service server at %s.", serverAddress)
 
 	// Start server.
 	server := initServer(service)
@@ -97,5 +97,5 @@ func runServe(cmd *cobra.Command, args []string) {
 	server.router.HandleFunc("/customers", server.addCustomer).Methods("POST")
 	server.router.HandleFunc("/customers/{id}", server.getCustomerByID).Methods("GET")
 
-	log.Fatal(http.ListenAndServe(serverURL, server.router))
+	log.Fatal(http.ListenAndServe(serverAddress, server.router))
 }
