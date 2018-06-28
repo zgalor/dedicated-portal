@@ -46,6 +46,258 @@ parameters:
 
 objects:
 
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: messaging-config
+  data:
+
+    artemis-roles.properties: |-
+      admins=admin
+      services=clusters-service,customers-service
+
+    artemis-users.properties: |-
+      admin=${PASSWORD}
+      clusters-service=${PASSWORD}
+      customers-service=${PASSWORD}
+
+    bootstrap.xml: |-
+      <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+      <broker
+        xmlns="http://activemq.org/schema">
+
+        <!-- Authentication domain: -->
+        <jaas-security domain="activemq"/>
+
+        <!-- Broker configuration: -->
+        <server configuration="file:/var/lib/artemis/etc/broker.xml"/>
+
+        <!-- Console configuration: -->
+        <web
+          bind="https://0.0.0.0:8161"
+          path="web"
+          keyStorePath="/var/lib/artemis/etc/console.p12"
+          keyStorePassword="">
+
+          <app url="activemq-branding" war="activemq-branding.war"/>
+          <app url="artemis-plugin" war="artemis-plugin.war"/>
+          <app url="console" war="console.war"/>
+
+        </web>
+      </broker>
+
+    broker.xml: |-
+      <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+      <configuration
+        xmlns="urn:activemq"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xi="http://www.w3.org/2001/XInclude"
+        xsi:schemaLocation="urn:activemq /schema/artemis-configuration.xsd">
+
+        <core
+          xmlns="urn:activemq:core"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="urn:activemq:core ">
+
+          <name>artemis</name>
+
+          <persistence-enabled>true</persistence-enabled>
+          <journal-type>ASYNCIO</journal-type>
+          <paging-directory>data/paging</paging-directory>
+          <bindings-directory>data/bindings</bindings-directory>
+          <journal-directory>data/journal</journal-directory>
+          <large-messages-directory>data/large-messages</large-messages-directory>
+          <journal-datasync>true</journal-datasync>
+          <journal-min-files>2</journal-min-files>
+          <journal-pool-files>10</journal-pool-files>
+          <journal-file-size>10M</journal-file-size>
+          <disk-scan-period>5000</disk-scan-period>
+          <max-disk-usage>90</max-disk-usage>
+          <critical-analyzer>true</critical-analyzer>
+          <critical-analyzer-timeout>120000</critical-analyzer-timeout>
+          <critical-analyzer-check-period>60000</critical-analyzer-check-period>
+          <critical-analyzer-policy>HALT</critical-analyzer-policy>
+
+          <acceptors>
+            <acceptor name="core">tcp://0.0.0.0:61616?tcpSendBufferSize=1048576;tcpReceiveBufferSize=1048576;protocols=CORE;useEpoll=true;sslEnabled=true;keyStorePath=/var/lib/artemis/etc/acceptors.p12;keyStorePassword=</acceptor>
+            <acceptor name="stomp">tcp://0.0.0.0:61613?tcpSendBufferSize=1048576;tcpReceiveBufferSize=1048576;protocols=STOMP;useEpoll=true;sslEnabled=true;keyStorePath=/var/lib/artemis/etc/acceptors.p12;keyStorePassword=</acceptor>
+          </acceptors>
+
+          <security-settings>
+            <security-setting match="#">
+              <permission type="createNonDurableQueue" roles="admins"/>
+              <permission type="deleteNonDurableQueue" roles="admins"/>
+              <permission type="createDurableQueue" roles="admins"/>
+              <permission type="deleteDurableQueue" roles="admins"/>
+              <permission type="createAddress" roles="admins"/>
+              <permission type="deleteAddress" roles="admins"/>
+              <permission type="consume" roles="admins,services"/>
+              <permission type="browse" roles="admins,services"/>
+              <permission type="send" roles="admins,services"/>
+              <permission type="manage" roles="admins,services"/>
+            </security-setting>
+          </security-settings>
+
+          <address-settings>
+
+            <address-setting match="activemq.management#">
+              <address-full-policy>PAGE</address-full-policy>
+              <auto-create-addresses>true</auto-create-addresses>
+              <auto-create-jms-queues>true</auto-create-jms-queues>
+              <auto-create-jms-topics>true</auto-create-jms-topics>
+              <auto-create-queues>true</auto-create-queues>
+              <dead-letter-address>dlq</dead-letter-address>
+              <expiry-address>expiry</expiry-address>
+              <max-size-bytes>-1</max-size-bytes>
+              <message-counter-history-day-limit>10</message-counter-history-day-limit>
+              <redelivery-delay>0</redelivery-delay>
+            </address-setting>
+
+            <address-setting match="#">
+              <address-full-policy>PAGE</address-full-policy>
+              <auto-create-addresses>false</auto-create-addresses>
+              <auto-create-jms-queues>false</auto-create-jms-queues>
+              <auto-create-jms-topics>false</auto-create-jms-topics>
+              <auto-create-queues>false</auto-create-queues>
+              <dead-letter-address>dlq</dead-letter-address>
+              <expiry-address>expiry</expiry-address>
+              <max-size-bytes>-1</max-size-bytes>
+              <message-counter-history-day-limit>10</message-counter-history-day-limit>
+              <redelivery-delay>0</redelivery-delay>
+            </address-setting>
+
+          </address-settings>
+
+          <addresses>
+
+            <address name="dlq">
+              <anycast>
+                <queue name="dlq"/>
+              </anycast>
+            </address>
+
+            <address name="expiry">
+              <anycast>
+                <queue name="expiry"/>
+              </anycast>
+            </address>
+
+            <address name="clusters.service">
+              <anycast>
+                <queue name="clusters.service"/>
+              </anycast>
+            </address>
+
+            <address name="customers.service">
+              <anycast>
+                <queue name="customers.service"/>
+              </anycast>
+            </address>
+
+            <address name="clusters.notifications">
+              <multicast>
+                <queue name="clusters.notifications"/>
+              </multicast>
+            </address>
+
+          </addresses>
+
+          <broker-plugins>
+            <broker-plugin class-name="org.apache.activemq.artemis.core.server.plugin.impl.LoggingActiveMQServerPlugin">
+              <property key="LOG_ALL_EVENTS" value="true"/>
+              <property key="LOG_CONNECTION_EVENTS" value="true"/>
+              <property key="LOG_SESSION_EVENTS" value="true"/>
+              <property key="LOG_CONSUMER_EVENTS" value="true"/>
+              <property key="LOG_DELIVERING_EVENTS" value="true"/>
+              <property key="LOG_SENDING_EVENTS" value="true"/>
+              <property key="LOG_INTERNAL_EVENTS" value="true"/>
+            </broker-plugin>
+          </broker-plugins>
+
+        </core>
+
+      </configuration>
+
+    jolokia-access.xml: |-
+      <?xml version='1.0' encoding="UTF-8" standalone="yes"?>
+
+      <restrict>
+        <cors>
+          <allow-origin>*://messaging-console.${DOMAIN}*</allow-origin>
+          <strict-checking/>
+        </cors>
+      </restrict>
+
+    logging.properties: |-
+      loggers=\
+      org.apache.activemq.artemis.core.server,\
+      org.apache.activemq.artemis.integration.bootstrap,\
+      org.apache.activemq.artemis.jms.server,\
+      org.apache.activemq.artemis.journal,\
+      org.apache.activemq.artemis.utils,\
+      org.eclipse.jetty,\
+      org.jboss.logging
+
+      logger.level=INFO
+      logger.org.apache.activemq.artemis.core.server.level=INFO
+      logger.org.apache.activemq.artemis.journal.level=INFO
+      logger.org.apache.activemq.artemis.utils.level=INFO
+      logger.org.apache.activemq.artemis.jms.level=INFO
+      logger.org.apache.activemq.artemis.integration.bootstrap.level=INFO
+      logger.org.eclipse.jetty.level=WARN
+      logger.handlers=CONSOLE
+
+      handler.CONSOLE=org.jboss.logmanager.handlers.ConsoleHandler
+      handler.CONSOLE.properties=autoFlush
+      handler.CONSOLE.level=DEBUG
+      handler.CONSOLE.autoFlush=true
+      handler.CONSOLE.formatter=PATTERN
+
+      formatter.PATTERN=org.jboss.logmanager.formatters.PatternFormatter
+      formatter.PATTERN.properties=pattern
+      formatter.PATTERN.pattern=%d %-5p [%c] %s%E%n
+
+    login.config: |-
+      activemq {
+        org.apache.activemq.artemis.spi.core.security.jaas.PropertiesLoginModule sufficient
+          debug=false
+          reload=true
+          org.apache.activemq.jaas.properties.user="artemis-users.properties"
+          org.apache.activemq.jaas.properties.role="artemis-roles.properties";
+      };
+
+    management.xml: |-
+      <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+      <management-context
+        xmlns="http://activemq.org/schema">
+
+        <authorisation>
+          <whitelist>
+            <entry domain="hawtio"/>
+          </whitelist>
+          <default-access>
+            <access method="list*" roles="admins"/>
+            <access method="get*" roles="admins"/>
+            <access method="is*" roles="admins"/>
+            <access method="set*" roles="admins"/>
+            <access method="*" roles="admins"/>
+          </default-access>
+          <role-access>
+            <match domain="org.apache.activemq.artemis">
+              <access method="list*" roles="admins"/>
+              <access method="get*" roles="admins"/>
+              <access method="is*" roles="admins"/>
+              <access method="set*" roles="admins"/>
+              <access method="*" roles="admins"/>
+            </match>
+          </role-access>
+        </authorisation>
+
+      </management-context>
+
 - apiVersion: apps/v1beta1
   kind: Deployment
   metadata:
@@ -63,6 +315,12 @@ objects:
           app: messaging-service
       spec:
         volumes:
+        - name: config
+          configMap:
+            name: messaging-config
+        - name: tls
+          secret:
+            secretName: messaging-tls
         - name: data
           emptyDir: {}
         containers:
@@ -70,8 +328,22 @@ objects:
           image: dedicated-portal/messaging-service:${VERSION}
           imagePullPolicy: IfNotPresent
           volumeMounts:
+          - name: config
+            mountPath: /etc/artemis
+          - name: tls
+            mountPath: /etc/pki/tls/artemis
           - name: data
             mountPath: /var/lib/artemis
+          args:
+          - --home=/usr/share/artemis
+          - --config=/etc/artemis
+          - --instance=/var/lib/artemis
+          - --console-cert=/etc/pki/tls/artemis/tls.crt
+          - --console-key=/etc/pki/tls/artemis/tls.key
+          - --console-keystore=/var/lib/artemis/etc/console.p12
+          - --acceptors-cert=/etc/pki/tls/artemis/tls.crt
+          - --acceptors-key=/etc/pki/tls/artemis/tls.key
+          - --acceptors-keystore=/var/lib/artemis/etc/acceptors.p12
 
 - apiVersion: v1
   kind: Service
@@ -79,6 +351,8 @@ objects:
     name: messaging-service
     labels:
       app: messaging-service
+    annotations:
+      service.alpha.openshift.io/serving-cert-secret-name: messaging-tls
   spec:
     selector:
       app: messaging-service
