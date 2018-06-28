@@ -1,0 +1,20 @@
+= OpenAPI test
+
+To test our `OpenAPI` file, use the `swagger_test.py` utility script.
+
+If `OpenAPI` file is valid, a server template code will be generated in the `server`
+directory.
+
+Running with `-r` cli argument will delete the `server` directory after test is run.
+
+[source]
+----
+$ # Remove old code generated if we have one
+$ rm -rf ./server #
+
+$ # Download and run swagger codegen
+$ ./swagger_test.py
+
+$ # Check generated code
+$ ls ./server
+----
