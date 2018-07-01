@@ -18,20 +18,28 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/container-mgmt/dedicated-portal/pkg/signals"
+	"github.com/container-mgmt/dedicated-portal/pkg/sql"
 )
 
 func main() {
 	// Set up signals so we handle the first shutdown signal gracefully:
 	stopCh := signals.SetupHandler()
 
-	service := NewClustersService()
+	err := sql.EnsureSchema(
+		"/usr/local/share/clusters-service/migrations", ConnectionURL(),
+	)
+	if err != nil {
+		panic(err)
+	}
+	service := NewClustersService(ConnectionURL())
 	fmt.Println("Created cluster service.")
 
 	// This is temporary and should be replaced with reading from the queue
 	server := NewServer(stopCh, service)
-	err := server.start()
+	err = server.start()
 	if err != nil {
 		panic(fmt.Sprintf("Error starting server: %v", err))
 	}
@@ -44,6 +52,16 @@ func main() {
 		panic(fmt.Sprintf("Error starting notifier: %v", err))
 	}
 
-	fmt.Println("Created server")
+	fmt.Println("Created notifier")
+
+	fmt.Println("Waiting for stop signal")
 	<-stopCh // wait until requested to stop.
+}
+
+// ConnectionURL generates a connection string from the environment.
+func ConnectionURL() string {
+	return fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable",
+		os.Getenv("POSTGRESQL_USER"),
+		os.Getenv("POSTGRESQL_PASSWORD"),
+		os.Getenv("POSTGRESQL_DATABASE"))
 }

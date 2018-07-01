@@ -417,6 +417,13 @@ objects:
         - name: service
           image: dedicated-portal/clusters-service:${VERSION}
           imagePullPolicy: IfNotPresent
+          env:
+          - name: POSTGRESQL_DATABASE
+            value: clusters
+          - name: POSTGRESQL_USER
+            value: service
+          - name: POSTGRESQL_PASSWORD
+            value: ${PASSWORD}
           command:
           - /usr/local/bin/clusters-service
           ports:
