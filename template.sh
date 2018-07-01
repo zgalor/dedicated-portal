@@ -20,7 +20,7 @@
 # the application.
 
 # Create the namespace:
-oc new-project dedicated-portal
+oc new-project dedicated-portal || true
 
 # Use the template to create the objects:
 oc process \
