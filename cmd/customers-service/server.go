@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -60,7 +59,7 @@ func init() {
 		8000,
 		"The port number of the server.",
 	)
-	flag.StringVar(
+	flags.StringVar(
 		&serveArgs.etcdEndpoint,
 		"etcd-endpoint",
 		"localhost:2379",
