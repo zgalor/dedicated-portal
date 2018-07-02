@@ -24,12 +24,13 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+
+	"github.com/container-mgmt/messaging-library/pkg/client"
 )
 
 // This is similar to the function in customers-webserver/utils.go
 // there's no point turning it into a shared file between the two workers
 // if the REST implementation is supposed to be removed later anyway.
-
 func getQueryParamInt(param string, defaultValue int64, r *http.Request) (value int64, err error) {
 	valueString, ok := r.URL.Query()[param]
 
@@ -78,6 +79,18 @@ func (server *Server) addCustomer(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeJSONResponse(w, 500, map[string]string{"error": fmt.Sprintf("Error adding customer, %v", err)})
 	} else {
+
+		m := client.Message{
+			Data: client.MessageData{
+				"type":   "ADD",
+				"kind":   "Customer",
+				"object": ret,
+			},
+		}
+
+		log.Printf("sending notifications on: %s", serveArgs.notificationTopic)
+		server.conn.Publish(m, serveArgs.notificationTopic)
+
 		writeJSONResponse(w, 200, ret)
 	}
 }

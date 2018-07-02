@@ -24,18 +24,23 @@ import (
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
+
+	"github.com/container-mgmt/messaging-library/pkg/client"
+	"github.com/container-mgmt/messaging-library/pkg/connections/stomp"
 )
 
 // Server serves REST API requests on clusters.
 type Server struct {
 	service CustomersService
 	router  *mux.Router
+	conn    client.Connection
 }
 
 var serveArgs struct {
-	host         string
-	port         int
-	etcdEndpoint string
+	host              string
+	port              int
+	etcdEndpoint      string
+	notificationTopic string
 }
 
 var serveCmd = &cobra.Command{
@@ -65,6 +70,12 @@ func init() {
 		"localhost:2379",
 		"The endpoint running the etcd data store.",
 	)
+	flags.StringVar(
+		&serveArgs.notificationTopic,
+		"notifications-topic",
+		"customers.notifications",
+		"The name of the topic listening to notifications, for example: customers.notifications",
+	)
 }
 
 // InitServer is a constructor for the Server struct.
@@ -90,6 +101,8 @@ func runServe(cmd *cobra.Command, args []string) {
 
 	// Start server.
 	server := initServer(service)
+	initConnection(server)
+	defer server.Close()
 
 	// Init route table
 	server.router.HandleFunc("/customers", server.getAllCustomers).Methods("GET")
@@ -97,4 +110,20 @@ func runServe(cmd *cobra.Command, args []string) {
 	server.router.HandleFunc("/customers/{id}", server.getCustomerByID).Methods("GET")
 
 	log.Fatal(http.ListenAndServe(serverAddress, server.router))
+}
+
+func initConnection(server *Server) {
+	// Create a new connection object.
+	var err error
+
+	server.conn, err = stomp.NewConnection(&client.ConnectionSpec{})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// Close server
+func (server *Server) Close() {
+	server.conn.Close()
+	server.service.Close()
 }
