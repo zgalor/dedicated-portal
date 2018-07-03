@@ -28,42 +28,47 @@ import (
 	"github.com/container-mgmt/messaging-library/pkg/client"
 )
 
-// This is similar to the function in customers-webserver/utils.go
-// there's no point turning it into a shared file between the two workers
-// if the REST implementation is supposed to be removed later anyway.
-func getQueryParamInt(param string, defaultValue int64, r *http.Request) (value int64, err error) {
-	valueString, ok := r.URL.Query()[param]
-
-	if !ok || len(valueString) < 1 {
+func getQueryParamInt(key string, defaultValue int64, r *http.Request) (value int64, err error) {
+	valStr := r.URL.Query().Get(key)
+	if valStr == "" {
 		return defaultValue, nil
 	}
-
-	// This needs to be ParseInt and not Atoi because the interface asks for int64
-	value, err = strconv.ParseInt(valueString[0], 10, 64)
+	value, err = strconv.ParseInt(valStr, 10, 64)
 	return
 }
 
-func (server *Server) getAllCustomers(w http.ResponseWriter, r *http.Request) {
+func (server *Server) getCustomersList(w http.ResponseWriter, r *http.Request) {
 	log.Println("GET /customers request")
 
-	page, err := getQueryParamInt("page", 0, r)
+	var ret *CustomersList
+	var err error
+	var page int64
+	var size int64
+
+	// Get Query Parameters.
+	page, err = getQueryParamInt("page", 0, r)
 	if err != nil {
-		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("%v", err)})
+		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error listing customers, %v", err)})
 		return
 	}
 
-	size, err := getQueryParamInt("size", 100, r)
+	size, err = getQueryParamInt("size", defaultLimit, r)
 	if err != nil {
-		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("%v", err)})
+		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error listing customers, %v", err)})
 		return
 	}
 
-	ret, err := server.service.List(&ListArguments{Page: page, Size: size})
-	if err != nil {
-		writeJSONResponse(w, 500, map[string]string{"error": fmt.Sprintf("Error listing customers, %v", err)})
-	} else {
-		writeJSONResponse(w, 200, ret)
+	args := &ListArguments{
+		Page: page,
+		Size: size,
 	}
+
+	ret, err = server.service.List(args)
+	if err != nil {
+		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error listing customers, %v", err)})
+	}
+	writeJSONResponse(w, http.StatusOK, ret)
+
 }
 
 func (server *Server) addCustomer(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +82,7 @@ func (server *Server) addCustomer(w http.ResponseWriter, r *http.Request) {
 	}
 	ret, err := server.service.Add(customer)
 	if err != nil {
-		writeJSONResponse(w, 500, map[string]string{"error": fmt.Sprintf("Error adding customer, %v", err)})
+		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error adding customer, %v", err)})
 	} else {
 
 		m := client.Message{
@@ -91,7 +96,7 @@ func (server *Server) addCustomer(w http.ResponseWriter, r *http.Request) {
 		log.Printf("sending notifications on: %s", serveArgs.notificationTopic)
 		server.conn.Publish(m, serveArgs.notificationTopic)
 
-		writeJSONResponse(w, 200, ret)
+		writeJSONResponse(w, http.StatusOK, ret)
 	}
 }
 
@@ -100,9 +105,9 @@ func (server *Server) getCustomerByID(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	ret, err := server.service.Get(id)
 	if err != nil {
-		writeJSONResponse(w, 500, map[string]string{"error": fmt.Sprintf("Error getting customer, %v", err)})
+		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error getting customer, %v", err)})
 	} else {
-		writeJSONResponse(w, 200, ret)
+		writeJSONResponse(w, http.StatusOK, ret)
 	}
 }
 
