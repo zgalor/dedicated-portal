@@ -27,14 +27,15 @@ import (
 func main() {
 	// Set up signals so we handle the first shutdown signal gracefully:
 	stopCh := signals.SetupHandler()
-
+	url := ConnectionURL()
 	err := sql.EnsureSchema(
-		"/usr/local/share/clusters-service/migrations", ConnectionURL(),
+		"/usr/local/share/clusters-service/migrations",
+		url,
 	)
 	if err != nil {
 		panic(err)
 	}
-	service := NewClustersService(ConnectionURL())
+	service := NewClustersService(url)
 	fmt.Println("Created cluster service.")
 
 	// This is temporary and should be replaced with reading from the queue
