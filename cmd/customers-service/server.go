@@ -105,9 +105,13 @@ func runServe(cmd *cobra.Command, args []string) {
 	defer server.Close()
 
 	// Init route table
-	server.router.HandleFunc("/customers", server.getAllCustomers).Methods("GET")
+	server.router.HandleFunc("/customers", server.getCustomersList).Methods("GET")
 	server.router.HandleFunc("/customers", server.addCustomer).Methods("POST")
 	server.router.HandleFunc("/customers/{id}", server.getCustomerByID).Methods("GET")
+	server.router.Path("/customers").
+		Queries("page", "{[0-9]+}", "size", "{[0-9]+}").
+		Methods("GET").
+		HandlerFunc(server.getCustomersList)
 
 	log.Fatal(http.ListenAndServe(serverAddress, server.router))
 }
