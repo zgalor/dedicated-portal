@@ -5,9 +5,15 @@ all the customers of Openshift Dedicated.
 
 == Before you start
 
-Currently the customers-service uses etcd as a main data store - meaning,
-you should have a running etcd cluster one your machine or on a remote host.
-To get started with etcd please refer to: http://github.com/coreos/etcd.
+Currently the customers-service uses postgreSQL as a main data store - meaning,
+you should have a running postgress database one your machine or on a remote host.
+
+To set up the database and appropriate tables run:
+
+[source]
+----
+psql -U postgres -a -f customers.sql
+----
 
 In addition, the customers-service utilizes a messaging-library to publish
 events (e.g. adding / deleting customers). To get started with messaging-library

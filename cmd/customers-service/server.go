@@ -39,7 +39,7 @@ type Server struct {
 var serveArgs struct {
 	host              string
 	port              int
-	etcdEndpoint      string
+	sqlConnStr        string
 	notificationTopic string
 }
 
@@ -65,10 +65,10 @@ func init() {
 		"The port number of the server.",
 	)
 	flags.StringVar(
-		&serveArgs.etcdEndpoint,
-		"etcd-endpoint",
-		"localhost:2379",
-		"The endpoint running the etcd data store.",
+		&serveArgs.sqlConnStr,
+		"sql-connection-string",
+		"host=localhost port=5432 user=postgres password=1234 dbname=customers sslmode=disable",
+		"The connection string for connection to sql datastore.",
 	)
 	flags.StringVar(
 		&serveArgs.notificationTopic,
@@ -87,7 +87,7 @@ func initServer(service CustomersService) (server *Server) {
 }
 
 func runServe(cmd *cobra.Command, args []string) {
-	service, err := NewEtcdCustomersService(serveArgs.etcdEndpoint)
+	service, err := NewSQLCustomersService(serveArgs.sqlConnStr)
 	if err != nil {
 		panic(fmt.Sprintf("Can't connect to etcd: %v", err))
 	}
