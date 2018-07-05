@@ -32,7 +32,6 @@ import (
 // Server serves REST API requests on clusters.
 type Server struct {
 	service CustomersService
-	router  *mux.Router
 	conn    client.Connection
 }
 
@@ -81,7 +80,6 @@ func init() {
 // InitServer is a constructor for the Server struct.
 func initServer(service CustomersService) (server *Server) {
 	server = new(Server)
-	server.router = mux.NewRouter()
 	server.service = service
 	return server
 }
@@ -104,16 +102,20 @@ func runServe(cmd *cobra.Command, args []string) {
 	initConnection(server)
 	defer server.Close()
 
-	// Init route table
-	server.router.HandleFunc("/customers", server.getCustomersList).Methods("GET")
-	server.router.HandleFunc("/customers", server.addCustomer).Methods("POST")
-	server.router.HandleFunc("/customers/{id}", server.getCustomerByID).Methods("GET")
-	server.router.Path("/customers").
+	// Create the main router:
+	mainRouter := mux.NewRouter()
+
+	// Create the API router:
+	apiRouter := mainRouter.PathPrefix("/api/customers_mgmt/v1").Subrouter()
+	apiRouter.HandleFunc("/customers", server.getCustomersList).Methods("GET")
+	apiRouter.HandleFunc("/customers", server.addCustomer).Methods("POST")
+	apiRouter.HandleFunc("/customers/{id}", server.getCustomerByID).Methods("GET")
+	apiRouter.Path("/customers").
 		Queries("page", "{[0-9]+}", "size", "{[0-9]+}").
 		Methods("GET").
 		HandlerFunc(server.getCustomersList)
 
-	log.Fatal(http.ListenAndServe(serverAddress, server.router))
+	log.Fatal(http.ListenAndServe(serverAddress, mainRouter))
 }
 
 func initConnection(server *Server) {

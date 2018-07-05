@@ -36,43 +36,81 @@ The `serve` command has a number of flags one can configure, one can view them u
 
 === Adding Customers:
 
-To add a customer simple issue a `POST` request on `/customers` supplying a Customer json object. e.g:
+To add a customer simple issue a `POST` request on
+`/api/customer_mgmt/v1/customers` supplying a Customer JSON object. e.g:
+
 [source]
 ----
-curl http://localhost:8000/customers -d '{"name":"nimrod", "owned_clusters": ["cluster-id0", "cluster-id1"]}'
+curl \
+http://localhost:8000/api/customers_mgmt/v1/customers \
+-d '
+{
+  "name": "nimrod",
+  "owned_clusters": [
+    "cluster-id0",
+    "cluster-id1"
+  ]
+}
+'
 ----
-A response for this request is a Customer object as stored by the customers-service, meaning, a response for the above request can look like:
-[source]
+
+A response for this request is a Customer object as stored by the
+customers-service, meaning, a response for the above request can look like:
+
+[source,json]
 ----
-{"id":"xxx-yyy-zzz", "name":"nimrod", "owned_clusters": ["cluster-id0", "cluster-id1"]}'
+{
+  "id": "xxx-yyy-zzz",
+  "name": "nimrod",
+  "owned_clusters": [
+    "cluster-id0",
+    "cluster-id1"
+  ]
+}
 ----
-In order to create a customer one has to supply at least a name in the json object,
+
+In order to create a customer one has to supply at least a name in the JSON object,
 the other fields (meaning, `owned_clusters`) are not mandatory.
 
 === Getting customers by ID:
 
-To get a customer by it's ID simply issue a `GET` request on `/customers/{id}`. For example:
+To get a customer by it's ID simply issue a `GET` request on
+`/api/customer_mgmt/v1/customers/{id}`. For example:
+
 [source]
 ----
-curl http://localhost:8000/customers/xxx-yyy-zzz
+curl http://localhost:8000/api/customers_mgmt/v1/customers/xxx-yyy-zzz
 ----
+
 Should result with the following response:
-[source]
+
+[source,json]
 ----
-{"id":"xxx-yyy-zzz", "name":"nimrod", "owned_clusters": ["cluster-id0", "cluster-id1"]}'
+{
+  "id": "xxx-yyy-zzz",
+  "name": "nimrod",
+  "owned_clusters": [
+    "cluster-id0",
+    "cluster-id1"
+  ]
+}
 ----
 
 === Getting a customers list:
 
 One can retrieve a list of customers in two ways:
-To retrieve all customers in the customers-service (up to a limit of 100 customers).
+
+To retrieve all customers in the customers-service (up to a limit of 100
+customers).
+
 [source]
 ----
-curl http://localhost:8000/customers
+curl http://localhost:8000/api/customers_mgmt/v1/customers
 ----
 
 To retrieve customers by supplying page and size arguments:
+
 [source]
 ----
-curl http://localhost:8000/customers?page=X&size=Y
+curl http://localhost:8000/api/customers_mgmt/v1/customers?page=X&size=Y
 ----
