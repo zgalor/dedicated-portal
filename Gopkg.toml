@@ -30,3 +30,7 @@
 [[constraint]]
   name = "github.com/container-mgmt/messaging-library"
   version = "0.1.0"
+
+[[constraint]]
+  name = "github.com/golang-migrate/migrate"
+  version = "3.3.0"
