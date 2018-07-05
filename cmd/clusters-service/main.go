@@ -46,15 +46,6 @@ func main() {
 	}
 	fmt.Println("Created server.")
 
-	notifier := NewNotifier(stopCh)
-	err = notifier.SendNotification("Hello", "myTarget")
-	if err != nil {
-		// TODO: Close stopCh
-		panic(fmt.Sprintf("Error starting notifier: %v", err))
-	}
-
-	fmt.Println("Created notifier")
-
 	fmt.Println("Waiting for stop signal")
 	<-stopCh // wait until requested to stop.
 }

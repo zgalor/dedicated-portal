@@ -24,8 +24,6 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-
-	"github.com/container-mgmt/messaging-library/pkg/client"
 )
 
 func getQueryParamInt(key string, defaultValue int64, r *http.Request) (value int64, err error) {
@@ -84,18 +82,6 @@ func (server *Server) addCustomer(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error adding customer, %v", err)})
 	} else {
-
-		m := client.Message{
-			Data: client.MessageData{
-				"type":   "ADD",
-				"kind":   "Customer",
-				"object": ret,
-			},
-		}
-
-		log.Printf("sending notifications on: %s", serveArgs.notificationTopic)
-		server.conn.Publish(m, serveArgs.notificationTopic)
-
 		writeJSONResponse(w, http.StatusOK, ret)
 	}
 }

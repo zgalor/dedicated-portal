@@ -24,15 +24,11 @@ import (
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
-
-	"github.com/container-mgmt/messaging-library/pkg/client"
-	"github.com/container-mgmt/messaging-library/pkg/connections/stomp"
 )
 
 // Server serves REST API requests on clusters.
 type Server struct {
 	service CustomersService
-	conn    client.Connection
 }
 
 var serveArgs struct {
@@ -99,7 +95,6 @@ func runServe(cmd *cobra.Command, args []string) {
 
 	// Start server.
 	server := initServer(service)
-	initConnection(server)
 	defer server.Close()
 
 	// Create the main router:
@@ -118,18 +113,7 @@ func runServe(cmd *cobra.Command, args []string) {
 	log.Fatal(http.ListenAndServe(serverAddress, mainRouter))
 }
 
-func initConnection(server *Server) {
-	// Create a new connection object.
-	var err error
-
-	server.conn, err = stomp.NewConnection(&client.ConnectionSpec{})
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 // Close server
 func (server *Server) Close() {
-	server.conn.Close()
 	server.service.Close()
 }
