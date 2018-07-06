@@ -2,15 +2,6 @@
 
 
 [[projects]]
-  name = "github.com/container-mgmt/messaging-library"
-  packages = [
-    "pkg/client",
-    "pkg/connections/stomp"
-  ]
-  revision = "49db517b91de4df9c0dd2e57c09d16d747abdf19"
-  version = "0.1.0"
-
-[[projects]]
   name = "github.com/coreos/etcd"
   packages = [
     "auth/authpb",
@@ -22,15 +13,6 @@
   ]
   revision = "33245c6b5b49130ca99280408fadfab01aac0e48"
   version = "v3.3.8"
-
-[[projects]]
-  name = "github.com/go-stomp/stomp"
-  packages = [
-    ".",
-    "frame"
-  ]
-  revision = "ba860900ef3307ecfe85ca14bc4838f24cfc7126"
-  version = "v2.0"
 
 [[projects]]
   name = "github.com/gogo/protobuf"
@@ -193,6 +175,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d36c34d7bb0191167a457d59518beef12d6251fd0903db4625fd9eb1f65b384e"
+  inputs-digest = "9c377d6e8095b844a69362fc9a73cc2d2e5c962a11d10fc3be4fe4d7c34c0e81"
   solver-name = "gps-cdcl"
   solver-version = 1

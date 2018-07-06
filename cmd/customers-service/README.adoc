@@ -15,10 +15,6 @@ To set up the database and appropriate tables run:
 psql -U postgres -a -f customers.sql
 ----
 
-In addition, the customers-service utilizes a messaging-library to publish
-events (e.g. adding / deleting customers). To get started with messaging-library
-please refer to: http://github.com/container-mgmt/messaging-library.
-
 == Command Line Interface
 
 The customers-service has a simple cli - the main command is the following:
