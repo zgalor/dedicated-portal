@@ -58,12 +58,7 @@ func (s Server) listClusters(w http.ResponseWriter, r *http.Request) {
 		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("%v", err)})
 		return
 	}
-	b, err := json.MarshalIndent(results, "", "  ")
-	if err != nil {
-		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("%v", err)})
-		return
-	}
-	fmt.Fprintf(w, "%s\n", b)
+	writeJSONResponse(w, http.StatusOK, results)
 }
 
 func (s Server) createCluster(w http.ResponseWriter, r *http.Request) {
@@ -87,12 +82,7 @@ func (s Server) createCluster(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	b, err := json.MarshalIndent(result, "", "  ")
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	fmt.Fprintf(w, "%s\n", b)
+	writeJSONResponse(w, http.StatusCreated, result)
 }
 
 func (s Server) getCluster(w http.ResponseWriter, r *http.Request) {
@@ -106,12 +96,7 @@ func (s Server) getCluster(w http.ResponseWriter, r *http.Request) {
 		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("%v", err)})
 		return
 	}
-	b, err := json.MarshalIndent(cluster, "", "  ")
-	if err != nil {
-		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("%v", err)})
-		return
-	}
-	fmt.Fprintf(w, "%s\n", b)
+	writeJSONResponse(w, http.StatusOK, cluster)
 }
 
 func getQueryParamInt(param string, defaultValue int, r *http.Request) (value int, err error) {
