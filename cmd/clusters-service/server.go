@@ -27,13 +27,17 @@ func NewServer(stopCh <-chan struct{}, clusterService ClustersService) *Server {
 }
 
 func (s Server) start() error {
-	r := mux.NewRouter()
-	r.HandleFunc("/clusters", s.listClusters).Methods("GET")
-	r.HandleFunc("/clusters", s.createCluster).Methods("POST")
-	r.HandleFunc("/clusters/{uuid}", s.getCluster).Methods("GET")
+	// Create the main router:
+	mainRouter := mux.NewRouter()
+
+	// Create the API router:
+	apiRouter := mainRouter.PathPrefix("/api/clusters_mgmt/v1").Subrouter()
+	apiRouter.HandleFunc("/clusters", s.listClusters).Methods("GET")
+	apiRouter.HandleFunc("/clusters", s.createCluster).Methods("POST")
+	apiRouter.HandleFunc("/clusters/{uuid}", s.getCluster).Methods("GET")
 
 	fmt.Println("Listening.")
-	go http.ListenAndServe(":8000", r)
+	go http.ListenAndServe(":8000", mainRouter)
 	return nil
 }
 
