@@ -19,7 +19,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -36,8 +35,6 @@ func getQueryParamInt(key string, defaultValue int64, r *http.Request) (value in
 }
 
 func (server *Server) getCustomersList(w http.ResponseWriter, r *http.Request) {
-	log.Println("GET /customers request")
-
 	var ret *CustomersList
 	var err error
 	var page int64
@@ -71,7 +68,6 @@ func (server *Server) getCustomersList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) addCustomer(w http.ResponseWriter, r *http.Request) {
-	log.Println("POST /customers request")
 	decoder := json.NewDecoder(r.Body)
 	var customer Customer
 	err := decoder.Decode(&customer)
@@ -88,7 +84,6 @@ func (server *Server) addCustomer(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) getCustomerByID(w http.ResponseWriter, r *http.Request) {
-	log.Println("GET /customers/{id} request")
 	id := mux.Vars(r)["id"]
 	ret, err := server.service.Get(id)
 	if err != nil {

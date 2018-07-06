@@ -20,8 +20,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/golang/glog"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 )
@@ -110,7 +112,10 @@ func runServe(cmd *cobra.Command, args []string) {
 		Methods("GET").
 		HandlerFunc(server.getCustomersList)
 
-	log.Fatal(http.ListenAndServe(serverAddress, mainRouter))
+	// Enable the access log:
+	loggedRouter := handlers.LoggingHandler(os.Stdout, mainRouter)
+
+	log.Fatal(http.ListenAndServe(serverAddress, loggedRouter))
 }
 
 // Close server
