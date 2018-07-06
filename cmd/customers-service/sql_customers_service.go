@@ -179,37 +179,39 @@ func (service *SQLCustomersService) List(args *ListArguments) (*CustomersList, e
 	}
 	rows.Close()
 
-	qoutedIds := make([]string, len(ids))
-	for i, id := range ids {
-		qoutedIds[i] = fmt.Sprintf(`'%s'`, id)
-	}
-	idSet := strings.Join(qoutedIds, ", ")
-	query := fmt.Sprintf(`
+	if len(ids) > 0 {
+		qoutedIds := make([]string, len(ids))
+		for i, id := range ids {
+			qoutedIds[i] = fmt.Sprintf(`'%s'`, id)
+		}
+		idSet := strings.Join(qoutedIds, ", ")
+		query := fmt.Sprintf(`
 		select customer_id, cluster_id
 		from owned_clusters
 		where customer_id in (%s)`,
-		idSet)
+			idSet)
 
-	// Retrieve customers owned clusters.
-	customersToClusters := make(map[string][]string)
-	rows, err = service.db.Query(query)
-	if err != nil {
-		return nil, err
-	}
-	for rows.Next() {
-		var clusterID string
-		var customerID string
-		if err = rows.Scan(&customerID, &clusterID); err != nil {
+		// Retrieve customers owned clusters.
+		customersToClusters := make(map[string][]string)
+		rows, err = service.db.Query(query)
+		if err != nil {
 			return nil, err
 		}
-		customersToClusters[customerID] = append(customersToClusters[customerID], clusterID)
-	}
-	rows.Close()
+		for rows.Next() {
+			var clusterID string
+			var customerID string
+			if err = rows.Scan(&customerID, &clusterID); err != nil {
+				return nil, err
+			}
+			customersToClusters[customerID] = append(customersToClusters[customerID], clusterID)
+		}
+		rows.Close()
 
-	// Populate customers owned clusters
-	for _, customer := range items {
-		if customer != nil {
-			customer.OwnedClusters = (customersToClusters[customer.ID])
+		// Populate customers owned clusters
+		for _, customer := range items {
+			if customer != nil {
+				customer.OwnedClusters = (customersToClusters[customer.ID])
+			}
 		}
 	}
 
