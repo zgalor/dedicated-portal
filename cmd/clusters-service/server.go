@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -36,13 +38,15 @@ func (s Server) start() error {
 	apiRouter.HandleFunc("/clusters", s.createCluster).Methods("POST")
 	apiRouter.HandleFunc("/clusters/{uuid}", s.getCluster).Methods("GET")
 
+	// Enable the access log:
+	loggedRouter := handlers.LoggingHandler(os.Stdout, mainRouter)
+
 	fmt.Println("Listening.")
-	go http.ListenAndServe(":8000", mainRouter)
+	go http.ListenAndServe(":8000", loggedRouter)
 	return nil
 }
 
 func (s Server) listClusters(w http.ResponseWriter, r *http.Request) {
-	logRequest(r)
 	page, err := getQueryParamInt("page", 0, r)
 	if err != nil {
 		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("%v", err)})
@@ -116,8 +120,4 @@ func writeJSONResponse(w http.ResponseWriter, code int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	w.Write(response)
-}
-
-func logRequest(r *http.Request) {
-	fmt.Printf("[%s] [%s]\n", r.Method, r.URL)
 }

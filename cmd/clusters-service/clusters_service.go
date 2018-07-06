@@ -55,7 +55,6 @@ func (cs GenericClustersService) List(args ListArguments) (result ClustersResult
 		return ClustersResult{}, fmt.Errorf("Error openning connection: %v", err)
 	}
 	defer db.Close()
-	fmt.Printf("LIMIT: [%d] OFFESET: [%d]\n", args.Size, args.Page*args.Size)
 	rows, err := db.Query(`SELECT uuid, name
 		FROM clusters
 		ORDER BY uuid
@@ -91,7 +90,6 @@ func (cs GenericClustersService) List(args ListArguments) (result ClustersResult
 // Create saves a new cluster definition in the Database
 func (cs GenericClustersService) Create(name string) (result Cluster, err error) {
 	uuid, err := ksuid.NewRandom()
-	fmt.Printf("Generated id: %s\n", uuid)
 	if err != nil {
 		return Cluster{}, err
 	}
