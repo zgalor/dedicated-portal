@@ -28,16 +28,16 @@ type ListArguments struct {
 
 // ClustersResult is a result for a List request of Clusters.
 type ClustersResult struct {
-	Page  int
-	Size  int
-	Total int
-	Items []Cluster
+	Page  int       `json:"page"`
+	Size  int       `json:"size"`
+	Total int       `json:"total"`
+	Items []Cluster `json:"items"`
 }
 
 // Cluster represents an OpenShift cluster.
 type Cluster struct {
-	Name string
-	UUID string
+	Name string `json:"name,omitempty"`
+	UUID string `json:"id,omitempty"`
 }
 
 // NewClustersService Creates a new ClustersService.
