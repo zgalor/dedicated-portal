@@ -45,7 +45,7 @@ func NewSQLCustomersService(connStr string) (*SQLCustomersService, error) {
 	return service, nil
 }
 
-// Close closes the etcd customers service client.
+// Close closes the sql customers service client.
 func (service *SQLCustomersService) Close() {
 	service.db.Close()
 }
