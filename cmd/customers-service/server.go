@@ -119,6 +119,6 @@ func runServe(cmd *cobra.Command, args []string) {
 }
 
 // Close server
-func (server *Server) Close() {
-	server.service.Close()
+func (server *Server) Close() error {
+	return server.service.Close()
 }
