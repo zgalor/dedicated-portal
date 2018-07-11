@@ -24,7 +24,7 @@ pipeline {
       steps {
         sh '''
           # Build the images:
-          ./build.py images --save --version=${GIT_COMMIT}
+          make version=${GIT_COMMIT} tars
         '''
       }
     }

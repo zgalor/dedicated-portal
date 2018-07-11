@@ -14,36 +14,68 @@
 # limitations under the License.
 #
 
-# This Makefile is just a wrapper calling the 'build.py' script, for those used
-# to just run 'make'.
+# The name and version of the project:
+project:=dedicated_portal
+version:=latest
 
 .PHONY: binaries
-binaries:
-	./build.py binaries
+binaries: vendor
+	for cmd in $$(ls cmd); do \
+		cd cmd/$${cmd}; \
+		go install || exit 1; \
+		cd -; \
+	done
+
+vendor:
+	dep ensure -vendor-only -v
 
 .PHONY: apps
 apps:
-	./build.py apps
+	for app in $$(ls apps); do \
+		cd apps/$${app}; \
+		yarn install || exit 1; \
+		yarn build || exit 1; \
+		cd -; \
+	done
 
 .PHONY: images
-images:
-	./build.py images
+images: binaries apps
+	tmp=$$(mktemp -d); \
+	trap "rm -rf $${tmp}" EXIT; \
+	for image in $$(ls images); do \
+		cp -r images/$${image}/* $${tmp}; \
+		for cmd in $$(ls cmd); do \
+			cp $$(which $${cmd}) $${tmp} || exit 1; \
+		done; \
+		for app in $$(ls apps); do \
+			cp -r apps/$${app}/build $${tmp}/$${app} || exit 1; \
+		done; \
+		tag=$(project)/$${image}:$(version); \
+		docker build -t $${tag} $${tmp} || exit 1; \
+	done
 
 .PHONY: tars
-tars:
-	./build.py images --save
+tars: images
+	for image in $$(ls images); do \
+		tag=$(project)/$${image}:$(version); \
+		tar=$$(echo $${tag} | tr /: __).tar; \
+		docker save -o $${tar} $${tag} || exit 1; \
+	done
 
 .PHONY: tgzs
-tgzs:
-	./build.py images --save --compress
+tgzs: tars
+	for image in $$(ls images); do \
+		tar=$(project)_$${image}_$(version).tar; \
+		gzip -f $${tar} || exit 1; \
+	done
 
 .PHONY: lint
 lint:
-	./build.py lint
+	golint -min_confidence 0.9 -set_exit_status ./pkg/... ./cmd/...
 
 .PHONY: fmt
 fmt:
-	./build.py fmt
+	gofmt -s -l -w ./pkg/ ./cmd/
 
 .PHONY: clean
 clean:
