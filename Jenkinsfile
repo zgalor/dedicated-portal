@@ -16,7 +16,28 @@ limitations under the License.
 
 pipeline {
 
-  agent any
+  agent {
+    node {
+      // This label isn't really needed, but the 'label' is mandatory inside
+      // 'node', so we need to use it in order to also set a custom workspace.
+      // Note that this label has also to be assigned to all the Jenkins nodes
+      // where this pipeline is inteded to run.
+      label 'go'
+
+      // The source needs to be in a directory that is in the Go source path,
+      // otherwise the Go tools don't work correctly:
+      customWorkspace "${JENKINS_HOME}/jobs/${JOB_NAME}/builds/${BUILD_ID}/src/github.com/container-mgmt/dedicated-portal"
+    }
+  }
+
+  environment {
+    // Set the environment so that Go tools will work correctly:
+    GOPATH = "${JENKINS_HOME}/jobs/${JOB_NAME}/builds/${BUILD_ID}"
+
+    // The build process uses 'which' to find the binaries installed by 'go
+    // install', so we need to add the `GOBIN` directory:
+    PATH = "${PATH}:${GOPATH}/bin"
+  }
 
   stages {
 
