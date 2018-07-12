@@ -94,7 +94,13 @@ func (server *Server) getCustomerByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func writeJSONResponse(w http.ResponseWriter, code int, payload interface{}) {
-	response, _ := json.Marshal(payload)
+	response, err := json.Marshal(payload)
+	if err != nil {
+		response, err = json.Marshal(map[string]string{"error": fmt.Sprint(err)})
+		if err != nil {
+			panic(fmt.Sprintf("error marshalling error: %v", err))
+		}
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	w.Write(response)
