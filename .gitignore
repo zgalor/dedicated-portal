@@ -1,8 +1,6 @@
 *.gz
 *.log
 *.tar
-/.downloads/
-/.gopath/
 /vendor/
 build/
 node_modules/
