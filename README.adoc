@@ -7,7 +7,7 @@ management of _OpenShift_ clusters.
 
 == Building
 
-To build the project clone the repository in any directory and run the
+To build the project clone the repository into your `GOPATH` and run the
 `make` command.
 
 To build the container images run the `make images` command.
