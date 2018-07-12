@@ -79,4 +79,4 @@ fmt:
 
 .PHONY: clean
 clean:
-	rm -rf .gopath vendor *.tar *.tar.gz
+	rm -rf vendor *.tar *.tar.gz
