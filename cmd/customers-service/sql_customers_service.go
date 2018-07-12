@@ -46,8 +46,8 @@ func NewSQLCustomersService(connStr string) (*SQLCustomersService, error) {
 }
 
 // Close closes the sql customers service client.
-func (service *SQLCustomersService) Close() {
-	service.db.Close()
+func (service *SQLCustomersService) Close() error {
+	return service.db.Close()
 }
 
 // Add adds a single customer to psql database.
