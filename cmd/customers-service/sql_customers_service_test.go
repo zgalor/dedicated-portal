@@ -113,12 +113,12 @@ func TestList(t *testing.T) {
 	deleteAll()
 
 	items := []*Customer{
-		&Customer{
+		{
 			ID:            "test-id0",
 			Name:          "test-name0",
 			OwnedClusters: []string{"test-cluster-id0", "test-cluster-id1"},
 		},
-		&Customer{
+		{
 			ID:            "test-id1",
 			Name:          "test-name1",
 			OwnedClusters: []string{"test-cluster-id2"},

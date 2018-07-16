@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 )
 
@@ -96,10 +97,14 @@ func (server *Server) getCustomerByID(w http.ResponseWriter, r *http.Request) {
 func writeJSONResponse(w http.ResponseWriter, code int, payload interface{}) {
 	response, err := json.Marshal(payload)
 	if err != nil {
+		// If we can not marshal the payload, update response code and body.
+		glog.Errorf("Can't marshal json for response: %v", err)
+
 		response, err = json.Marshal(map[string]string{"error": fmt.Sprint(err)})
 		if err != nil {
-			panic(fmt.Sprintf("error marshalling error: %v", err))
+			response = []byte("{\"error\": \"can't marshal json for response\"}")
 		}
+		code = 500 // Internal server error code
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
