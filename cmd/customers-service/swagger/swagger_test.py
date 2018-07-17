@@ -24,8 +24,12 @@ import shutil
 import urllib.request
 from pathlib import Path
 
+# The file to parse and run the codegen on.
+INPUT_FILE = "../customers-service.yaml"
+
 SWAGGER_CODEGEN_CLI = "swagger-codegen-cli.jar"
 SWAGGER_VER = "3.0.0-rc1"
+OUTPUT_DIRECTORY = "./server"
 
 
 def download_swagger(ver):
@@ -41,6 +45,29 @@ def download_swagger(ver):
     urllib.request.urlretrieve(url, filename)
 
 
+def run_swagger(in_file, out_directory):
+    """
+    Run swagger codegen cli utility
+
+    @in_file string the api declaration file
+    @out_directory string the directory to generate code int
+    """
+    subprocess.run([
+        'java',
+        '-jar',
+        SWAGGER_CODEGEN_CLI,
+        'generate',
+        '-l',
+        'php',
+        '-i',
+        in_file,
+        '-o',
+        out_directory],
+        stdout=None,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True)
+
+
 if __name__ == "__main__":
     """
     Download the swagger codegen cli and run it on our api declaration file.
@@ -53,26 +80,16 @@ if __name__ == "__main__":
     # Run the swagger codegen.
     print("Make a tmp directory for the generated server code")
     try:
-        os.mkdir("./server")
+        os.mkdir(OUTPUT_DIRECTORY)
     except FileExistsError as e:
-        print("WARNING: \"server\" directory already exist.")
+        print("WARN: \"{}\" directory already exist.".format(OUTPUT_DIRECTORY))
 
     # Test the swagger declaration file.
     print("Generate code")
-    subprocess.call([
-        'java',
-        '-jar',
-        SWAGGER_CODEGEN_CLI,
-        'generate',
-        '-l',
-        'java',
-        '-i',
-        '../customers-service.yaml',
-        '-o',
-        './server'])
+    run_swagger(INPUT_FILE, OUTPUT_DIRECTORY)
 
     # Remove the tmp directory.
     for arg in sys.argv:
         if arg == "-r":
             print("Delete tmp directory.")
-            shutil.rmtree("./server")
+            shutil.rmtree(OUTPUT_DIRECTORY)
