@@ -10,6 +10,7 @@ paths:
   /customers:
     get:
       description: Returns all existing customers.
+      operationId: customersGet
       responses:
         '200':
           description: An array of all existing customers.
@@ -27,6 +28,7 @@ paths:
                 $ref: "#/components/schemas/Error"
     post:
       description: Create a Customer.
+      operationId: customersPost
       responses:
         '200':
           description: Information on the newly created Customer.
@@ -43,6 +45,7 @@ paths:
   /customers/{id}:
     get:
       description: Retrieves customer information for a specific customer.
+      operationId: customersIdGet
       parameters:
         - name: id
           in: path
