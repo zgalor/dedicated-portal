@@ -17,15 +17,21 @@ limitations under the License.
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 
+	"github.com/auth0/go-jwt-middleware"
+	"github.com/codegangsta/negroni"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
+
+	"github.com/container-mgmt/dedicated-portal/cmd/customers-service/jwtcert"
 )
 
 // Server serves REST API requests on clusters.
@@ -36,6 +42,7 @@ type Server struct {
 var serveArgs struct {
 	host              string
 	port              int
+	jwkCertURL        string
 	sqlConnStr        string
 	notificationTopic string
 }
@@ -62,6 +69,12 @@ func init() {
 		"The port number of the server.",
 	)
 	flags.StringVar(
+		&serveArgs.jwkCertURL,
+		"jwk-certs-url",
+		"https://localhost/auth/certs",
+		"The url endpoint for the JWK certs.",
+	)
+	flags.StringVar(
 		&serveArgs.sqlConnStr,
 		"sql-connection-string",
 		"host=localhost port=5432 user=postgres password=1234 dbname=customers sslmode=disable",
@@ -83,11 +96,20 @@ func initServer(service CustomersService) (server *Server) {
 }
 
 func runServe(cmd *cobra.Command, args []string) {
+	// Try to connect to SQLCustomersService
 	service, err := NewSQLCustomersService(serveArgs.sqlConnStr)
-	if err != nil {
-		panic(fmt.Sprintf("Can't connect to etcd: %v", err))
-	}
+	check(err, "Can't connect to sql service")
 	defer service.Close()
+
+	// Try to read the JWT public key object file.
+	jwtCert, err := jwtcert.DownloadAsPEM(serveArgs.jwkCertURL)
+	check(
+		err,
+		fmt.Sprintf(
+			"Can't download JWK certificate from URL '%s'",
+			serveArgs.jwkCertURL,
+		),
+	)
 
 	// Create server URL.
 	serverAddress := fmt.Sprintf("%s:%d", serveArgs.host, serveArgs.port)
@@ -112,13 +134,49 @@ func runServe(cmd *cobra.Command, args []string) {
 		Methods("GET").
 		HandlerFunc(server.getCustomersList)
 
-	// Enable the access log:
-	loggedRouter := handlers.LoggingHandler(os.Stdout, mainRouter)
+	// JWT Middleware
+	jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
+		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
+			result, _ := jwt.ParseRSAPublicKeyFromPEM([]byte(jwtCert))
+			return result, nil
+		},
+		ErrorHandler:  onAuthError,
+		SigningMethod: jwt.SigningMethodRS256,
+	})
 
+	// Enable the access authentication:
+	authRouter := negroni.New(
+		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext))
+	authRouter.UseHandler(mainRouter)
+
+	// Enable the access log:
+	loggedRouter := handlers.LoggingHandler(os.Stdout, authRouter)
+
+	// ListenAndServe
 	log.Fatal(http.ListenAndServe(serverAddress, loggedRouter))
 }
 
 // Close server
 func (server *Server) Close() error {
 	return server.service.Close()
+}
+
+// onAuthError returns an error json struct
+func onAuthError(w http.ResponseWriter, r *http.Request, err string) {
+	msg, _ := json.Marshal(map[string]string{"error": fmt.Sprint(err)})
+	if msg == nil {
+		msg = []byte("Unknown error while converting an error to json")
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnauthorized)
+	responseWriterWriteWithLog(w, msg)
+}
+
+// Panic on error
+func check(err error, msg string) {
+	if err != nil {
+		glog.Errorf("%s: %s", msg, err)
+		os.Exit(1)
+	}
 }

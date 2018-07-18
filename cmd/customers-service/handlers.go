@@ -108,5 +108,12 @@ func writeJSONResponse(w http.ResponseWriter, code int, payload interface{}) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	w.Write(response)
+	responseWriterWriteWithLog(w, response)
+}
+
+func responseWriterWriteWithLog(w http.ResponseWriter, msg []byte) {
+	_, err := w.Write(msg)
+	if err == nil {
+		glog.Errorf("Write to client: %s", err)
+	}
 }

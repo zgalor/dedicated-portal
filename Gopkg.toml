@@ -30,3 +30,15 @@
 [[constraint]]
   name = "github.com/golang-migrate/migrate"
   version = "3.3.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/auth0/go-jwt-middleware"
+
+[[constraint]]
+  name = "github.com/codegangsta/negroni"
+  version = "v0.3.0"
+
+[[constraint]]
+  name = "github.com/dgrijalva/jwt-go"
+  version = "v3.2.0"
