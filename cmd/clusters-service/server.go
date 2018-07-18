@@ -1,18 +1,23 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
-	"strconv"
 
+	"github.com/container-mgmt/dedicated-portal/pkg/signals"
+	"github.com/container-mgmt/dedicated-portal/pkg/sql"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/spf13/cobra"
 )
 
-// This file should be removed and replaced with a queue.
+var serveCmd = &cobra.Command{
+	Use:   "serve",
+	Short: "Serve the clusters service service",
+	Long:  "Serve the clusters service service.",
+	Run:   runServe,
+}
 
 // Server serves HTTP API requests on clusters.
 type Server struct {
@@ -46,78 +51,36 @@ func (s Server) start() error {
 	return nil
 }
 
-func (s Server) listClusters(w http.ResponseWriter, r *http.Request) {
-	page, err := getQueryParamInt("page", 0, r)
+func runServe(*cobra.Command, []string) {
+	// Set up signals so we handle the first shutdown signal gracefully:
+	stopCh := signals.SetupHandler()
+	url := ConnectionURL()
+	err := sql.EnsureSchema(
+		"/usr/local/share/clusters-service/migrations",
+		url,
+	)
 	if err != nil {
-		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("%v", err)})
-		return
+		panic(err)
 	}
-	size, err := getQueryParamInt("size", 100, r)
+	service := NewClustersService(url)
+	fmt.Println("Created cluster service.")
+
+	// This is temporary and should be replaced with reading from the queue
+	server := NewServer(stopCh, service)
+	err = server.start()
 	if err != nil {
-		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("%v", err)})
-		return
+		panic(fmt.Sprintf("Error starting server: %v", err))
 	}
-	results, err := s.clusterService.List(ListArguments{Page: page, Size: size})
-	if err != nil {
-		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("%v", err)})
-		return
-	}
-	writeJSONResponse(w, http.StatusOK, results)
+	fmt.Println("Created server.")
+
+	fmt.Println("Waiting for stop signal")
+	<-stopCh // wait until requested to stop.
 }
 
-func (s Server) createCluster(w http.ResponseWriter, r *http.Request) {
-	bytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("%v", err)})
-		return
-	}
-	var spec Cluster
-	err = json.Unmarshal(bytes, &spec)
-	if err != nil {
-		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("%v", err)})
-		return
-	}
-	if spec.UUID != "" {
-		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "uuid must be empty"})
-		return
-	}
-	result, err := s.clusterService.Create(spec.Name)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	writeJSONResponse(w, http.StatusCreated, result)
-}
-
-func (s Server) getCluster(w http.ResponseWriter, r *http.Request) {
-	uuid := mux.Vars(r)["uuid"]
-	if uuid == "" {
-		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "no uuid provided"})
-		return
-	}
-	cluster, err := s.clusterService.Get(uuid)
-	if err != nil {
-		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("%v", err)})
-		return
-	}
-	writeJSONResponse(w, http.StatusOK, cluster)
-}
-
-func getQueryParamInt(param string, defaultValue int, r *http.Request) (value int, err error) {
-	valueString, ok := r.URL.Query()[param]
-
-	if !ok || len(valueString) < 1 {
-		return defaultValue, nil
-	}
-	var result int64
-	// This needs to be ParseInt and not Atoi because the interface asks for int64
-	result, err = strconv.ParseInt(valueString[0], 10, 32)
-	return int(result), err
-}
-
-func writeJSONResponse(w http.ResponseWriter, code int, payload interface{}) {
-	response, _ := json.MarshalIndent(payload, "", "  ")
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	w.Write(response)
+// ConnectionURL generates a connection string from the environment.
+func ConnectionURL() string {
+	return fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable",
+		os.Getenv("POSTGRESQL_USER"),
+		os.Getenv("POSTGRESQL_PASSWORD"),
+		os.Getenv("POSTGRESQL_DATABASE"))
 }
