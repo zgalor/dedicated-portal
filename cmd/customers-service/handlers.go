@@ -113,7 +113,7 @@ func writeJSONResponse(w http.ResponseWriter, code int, payload interface{}) {
 
 func responseWriterWriteWithLog(w http.ResponseWriter, msg []byte) {
 	_, err := w.Write(msg)
-	if err == nil {
+	if err != nil {
 		glog.Errorf("Write to client: %s", err)
 	}
 }
