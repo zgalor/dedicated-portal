@@ -66,6 +66,8 @@ objects:
         - name: service
           image: dedicated-portal/clusters-service:${VERSION}
           imagePullPolicy: IfNotPresent
+          args:
+          - serve
           env:
           - name: POSTGRESQL_DATABASE
             value: clusters
