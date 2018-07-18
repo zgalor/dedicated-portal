@@ -71,7 +71,7 @@ func init() {
 	flags.StringVar(
 		&serveArgs.jwkCertURL,
 		"jwk-certs-url",
-		"https://localhost/auth/certs",
+		"",
 		"The url endpoint for the JWK certs.",
 	)
 	flags.StringVar(
@@ -100,6 +100,11 @@ func runServe(cmd *cobra.Command, args []string) {
 	service, err := NewSQLCustomersService(serveArgs.sqlConnStr)
 	check(err, "Can't connect to sql service")
 	defer service.Close()
+
+	// Verify that we have cert URL
+	if serveArgs.jwkCertURL == "" {
+		check(fmt.Errorf("flag missing: --jwk-certs-url"), "No cert URL defined")
+	}
 
 	// Try to read the JWT public key object file.
 	jwtCert, err := jwtcert.DownloadAsPEM(serveArgs.jwkCertURL)
@@ -165,7 +170,7 @@ func (server *Server) Close() error {
 func onAuthError(w http.ResponseWriter, r *http.Request, err string) {
 	msg, _ := json.Marshal(map[string]string{"error": fmt.Sprint(err)})
 	if msg == nil {
-		msg = []byte("Unknown error while converting an error to json")
+		msg = []byte("{\"error\":\"Unknown error while converting an error to json\"}")
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -173,7 +178,7 @@ func onAuthError(w http.ResponseWriter, r *http.Request, err string) {
 	responseWriterWriteWithLog(w, msg)
 }
 
-// Panic on error
+// Exit on error
 func check(err error, msg string) {
 	if err != nil {
 		glog.Errorf("%s: %s", msg, err)
