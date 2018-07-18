@@ -15,7 +15,7 @@
 #
 
 # The name and version of the project:
-project:=dedicated_portal
+project:=dedicated-portal
 version:=latest
 
 .PHONY: binaries
