@@ -80,7 +80,7 @@ pipeline {
             done
 
             # Deploy the application:
-            oc ${OC_ARGS} new-project dedicated-portal || true
+            oc ${OC_ARGS} new-project dedicated-portal || oc ${OC_ARGS} project dedicated-portal || true
             oc ${OC_ARGS} process \
               --filename=template.yml \
               --param=NAMESPACE=dedicated-portal \
