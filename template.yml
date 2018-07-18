@@ -145,6 +145,7 @@ objects:
           args:
           - serve
           - --sql-connection-string=host=localhost port=5432 user=service password=${PASSWORD} dbname=customers sslmode=disable
+          - --jwk-certs-url https://developers.redhat.com/auth/realms/rhd/protocol/openid-connect/certs
         - name: postgresql
           image: centos/postgresql-94-centos7
           imagePullPolicy: IfNotPresent

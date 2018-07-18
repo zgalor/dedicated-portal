@@ -2,6 +2,24 @@
 
 
 [[projects]]
+  branch = "master"
+  name = "github.com/auth0/go-jwt-middleware"
+  packages = ["."]
+  revision = "5493cabe49f7bfa6e2ec444a09d334d90cd4e2bd"
+
+[[projects]]
+  name = "github.com/codegangsta/negroni"
+  packages = ["."]
+  revision = "5dbbc83f748fc3ad38585842b0aedab546d0ea1e"
+  version = "v0.3.0"
+
+[[projects]]
+  name = "github.com/dgrijalva/jwt-go"
+  packages = ["."]
+  revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
+  version = "v3.2.0"
+
+[[projects]]
   name = "github.com/golang-migrate/migrate"
   packages = [
     ".",
@@ -72,6 +90,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0465845f92db2c4291f30126141d9807deb87ef49589b0320e78cfbf0f5d2978"
+  inputs-digest = "e6dcb61b1c057c4ff8ddefca9a28ca9d4588517847d5dd1861f4e457c58df03f"
   solver-name = "gps-cdcl"
   solver-version = 1
