@@ -24,7 +24,7 @@ import (
 	"os"
 
 	"github.com/auth0/go-jwt-middleware"
-	"github.com/codegangsta/negroni"
+	"github.com/urfave/negroni"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"
 	"github.com/gorilla/handlers"
