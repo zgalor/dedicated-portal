@@ -58,10 +58,10 @@ func (s Server) createCluster(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if spec.UUID != "" {
-		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "uuid must be empty"})
+		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "id must be empty"})
 		return
 	}
-	result, err := s.clusterService.Create(spec.Name)
+	result, err := s.clusterService.Create(spec)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

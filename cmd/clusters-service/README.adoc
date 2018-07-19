@@ -1,0 +1,88 @@
+= Clusters Service
+This service provides a restful API to create and get _OpenShift_ clusters 
+
+== Get Clusters List
+
+[source]
+----
+$ curl  http://clusters-service.127.0.0.1.nip.io/api/clusters_mgmt/v1/clusters
+{
+  "page": 0,
+  "size": 0,
+  "total": 0,
+  "items": []
+}
+----
+
+== Create a Cluster 
+create a file my_new_cluster.json
+[source]
+----
+{
+    "name": "myCluster",
+    "nodes": {
+        "master": 1,
+        "infra": 2,
+        "compute": 4
+    },
+    "memory": { 
+        "total": 400
+    },
+    "cpu": {
+        "total": 16
+    },
+    "storage": {
+        "total": 72
+    }
+}  
+$ curl -X POST -H "Content-Type: application/json" \
+  --data @my_new_cluster.json \ http://clusters-service.127.0.0.1.nip.io/api/clusters_mgmt/v1/clusters 
+{
+  "id": "17YtAO99Xxd7AS25rPatEGrdX7d",
+  "name": "myCluster",
+  "nodes": {
+    "total": 7,
+    "master": 1,
+    "infra": 2,
+    "compute": 4
+  },
+  "memory": {
+    "total": 400
+  },
+  "cpu": {
+    "total": 16
+  },
+  "storage": {
+    "total": 72
+  }
+}
+----
+
+== Get Cluster Details
+[source]
+----
+curl  http://clusters-service.127.0.0.1.nip.io/api/clusters_mgmt/v1/clusters/17YtAO99Xxd7AS25rPatEGrdX7d
+{
+  "id": "17YtAO99Xxd7AS25rPatEGrdX7d",
+  "name": "myCluster",
+  "nodes": {
+    "total": 7,
+    "master": 1,
+    "infra": 2,
+    "compute": 4
+  },
+  "memory": {
+    "total": 400
+  },
+  "cpu": {
+    "total": 16
+  },
+  "storage": {
+    "total": 72
+  }
+}
+----
+
+
+
+
