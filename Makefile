@@ -29,26 +29,14 @@ binaries: vendor
 vendor:
 	dep ensure -vendor-only -v
 
-.PHONY: apps
-apps:
-	for app in $$(ls apps); do \
-		cd apps/$${app}; \
-		yarn install || exit 1; \
-		yarn build || exit 1; \
-		cd -; \
-	done
-
 .PHONY: images
-images: binaries apps
+images: binaries
 	tmp=$$(mktemp -d); \
 	trap "rm -rf $${tmp}" EXIT; \
 	for image in $$(ls images); do \
 		cp -r images/$${image}/* $${tmp}; \
 		for cmd in $$(ls cmd); do \
 			cp $$(which $${cmd}) $${tmp} || exit 1; \
-		done; \
-		for app in $$(ls apps); do \
-			cp -r apps/$${app}/build $${tmp}/$${app} || exit 1; \
 		done; \
 		tag=$(project)/$${image}:$(version); \
 		docker build -t $${tag} $${tmp} || exit 1; \
