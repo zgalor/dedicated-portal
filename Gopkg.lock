@@ -8,12 +8,6 @@
   revision = "5493cabe49f7bfa6e2ec444a09d334d90cd4e2bd"
 
 [[projects]]
-  name = "github.com/codegangsta/negroni"
-  packages = ["."]
-  revision = "5dbbc83f748fc3ad38585842b0aedab546d0ea1e"
-  version = "v0.3.0"
-
-[[projects]]
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
   revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
@@ -87,9 +81,15 @@
   revision = "583c0c0531f06d5278b7d917446061adc344b5cd"
   version = "v1.0.1"
 
+[[projects]]
+  name = "github.com/urfave/negroni"
+  packages = ["."]
+  revision = "5dbbc83f748fc3ad38585842b0aedab546d0ea1e"
+  version = "v0.3.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e6dcb61b1c057c4ff8ddefca9a28ca9d4588517847d5dd1861f4e457c58df03f"
+  inputs-digest = "cb134df4749fb5c0b79d368f76044cd63b1d37d7b183eae11be0fa148bbedb02"
   solver-name = "gps-cdcl"
   solver-version = 1
