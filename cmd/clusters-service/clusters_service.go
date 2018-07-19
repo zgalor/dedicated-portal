@@ -11,7 +11,7 @@ import (
 // ClustersService performs operations on clusters.
 type ClustersService interface {
 	List(args ListArguments) (clusters ClustersResult, err error)
-	Create(name string) (result Cluster, err error)
+	Create(spec Cluster) (result Cluster, err error)
 	Get(uuid string) (result Cluster, err error)
 }
 
@@ -36,8 +36,26 @@ type ClustersResult struct {
 
 // Cluster represents an OpenShift cluster.
 type Cluster struct {
-	Name string `json:"name,omitempty"`
-	UUID string `json:"id,omitempty"`
+	UUID    string          `json:"id,omitempty"`
+	Name    string          `json:"name,omitempty"`
+	Nodes   ClusterNodes    `json:"nodes,omitempty"`
+	Memory  ClusterResource `json:"memory,omitempty"`
+	CPU     ClusterResource `json:"cpu,omitempty"`
+	Storage ClusterResource `json:"storage,omitempty"`
+}
+
+// ClusterResource represents a resource availability in the cluster
+type ClusterResource struct {
+	Used  int `json:"used,omitempty"`
+	Total int `json:"total,omitempty"`
+}
+
+// ClusterNodes represents the node count inside a cluster
+type ClusterNodes struct {
+	Total   int `json:"total,omitempty"`
+	Master  int `json:"master,omitempty"`
+	Infra   int `json:"infra,omitempty"`
+	Compute int `json:"compute,omitempty"`
 }
 
 // NewClustersService Creates a new ClustersService.
@@ -88,7 +106,7 @@ func (cs GenericClustersService) List(args ListArguments) (result ClustersResult
 }
 
 // Create saves a new cluster definition in the Database
-func (cs GenericClustersService) Create(name string) (result Cluster, err error) {
+func (cs GenericClustersService) Create(spec Cluster) (result Cluster, err error) {
 	uuid, err := ksuid.NewRandom()
 	if err != nil {
 		return Cluster{}, err
@@ -98,13 +116,39 @@ func (cs GenericClustersService) Create(name string) (result Cluster, err error)
 		return Cluster{}, err
 	}
 	defer db.Close()
-	stmt, err := db.Prepare(`INSERT INTO clusters (uuid, name)
-		VALUES ($1, $2)`)
+	stmt, err := db.Prepare(`
+		INSERT INTO clusters (
+			uuid, 
+			name, 
+			master_nodes, 
+			infra_nodes, 
+			compute_nodes, 
+			memory, 
+			cpu_cores, 
+			storage
+		) VALUES (
+			$1, 
+			$2, 
+			$3, 
+			$4, 
+			$5, 
+			$6, 
+			$7, 
+			$8)
+	`)
 	if err != nil {
 		return Cluster{}, err
 	}
 	defer stmt.Close()
-	queryResult, err := stmt.Exec(uuid, name)
+	queryResult, err := stmt.Exec(
+		uuid,
+		spec.Name,
+		spec.Nodes.Master,
+		spec.Nodes.Infra,
+		spec.Nodes.Compute,
+		spec.Memory.Total,
+		spec.CPU.Total,
+		spec.Storage.Total)
 	if err != nil {
 		return Cluster{}, err
 	}
@@ -117,10 +161,28 @@ func (cs GenericClustersService) Create(name string) (result Cluster, err error)
 			inserted,
 		)
 	}
+
+	totalNodes := spec.Nodes.Master + spec.Nodes.Infra + spec.Nodes.Compute
 	return Cluster{
-		Name: name,
+		Name: spec.Name,
 		UUID: fmt.Sprintf("%s", uuid),
+		Nodes: ClusterNodes{
+			Total:   totalNodes,
+			Master:  spec.Nodes.Master,
+			Infra:   spec.Nodes.Infra,
+			Compute: spec.Nodes.Compute,
+		},
+		Memory: ClusterResource{
+			Total: spec.Memory.Total,
+		},
+		CPU: ClusterResource{
+			Total: spec.CPU.Total,
+		},
+		Storage: ClusterResource{
+			Total: spec.Storage.Total,
+		},
 	}, nil
+
 }
 
 // Get returns a single cluster by id
@@ -130,10 +192,40 @@ func (cs GenericClustersService) Get(uuid string) (result Cluster, err error) {
 		return Cluster{}, err
 	}
 	defer db.Close()
-	var name string
-	err = db.QueryRow("SELECT uuid, name FROM clusters	WHERE uuid = $1", uuid).Scan(&uuid, &name)
+	var (
+		name         string
+		masterNodes  int
+		infraNodes   int
+		computeNodes int
+		memory       int
+		cpuCores     int
+		storage      int
+	)
+
+	err = db.QueryRow("SELECT uuid, name, master_nodes, infra_nodes, compute_nodes, memory, cpu_cores, storage FROM clusters	WHERE uuid = $1", uuid).Scan(
+		&uuid, &name, &masterNodes, &infraNodes, &computeNodes, &memory, &cpuCores, &storage)
 	if err != nil {
 		return Cluster{}, err
 	}
-	return Cluster{uuid, name}, nil
+	totalNodes := masterNodes + infraNodes + computeNodes
+	return Cluster{
+			Name: name,
+			UUID: uuid,
+			Nodes: ClusterNodes{
+				Total:   totalNodes,
+				Master:  masterNodes,
+				Infra:   infraNodes,
+				Compute: computeNodes,
+			},
+			Memory: ClusterResource{
+				Total: memory,
+			},
+			CPU: ClusterResource{
+				Total: cpuCores,
+			},
+			Storage: ClusterResource{
+				Total: storage,
+			},
+		},
+		nil
 }
