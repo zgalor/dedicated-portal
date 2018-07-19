@@ -63,7 +63,7 @@ func (s Server) createCluster(w http.ResponseWriter, r *http.Request) {
 	}
 	result, err := s.clusterService.Create(spec)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("%v", err)})
 		return
 	}
 	writeJSONResponse(w, http.StatusCreated, result)
