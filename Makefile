@@ -60,7 +60,6 @@ tgzs: tars
 .PHONY: lint
 lint:
 	./hack/verify.sh
-	./build.py lint
 	golint -min_confidence 0.9 -set_exit_status ./pkg/... ./cmd/...
 
 .PHONY: fmt
