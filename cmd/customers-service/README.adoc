@@ -1,0 +1,118 @@
+= Openshift Dedicated Customers Service
+
+Openshift Dedicated Customers Service is the micro-service in charge of managing
+all the customers of Openshift Dedicated.
+
+== Before you start
+
+Currently the customers-service uses postgreSQL as a main data store - meaning,
+you should have a running postgress database one your machine or on a remote host.
+
+To set up the database and appropriate tables run:
+
+[source]
+----
+psql -U postgres -a -f customers.sql
+----
+
+== Command Line Interface
+
+The customers-service has a simple cli - the main command is the following:
+
+[source]
+----
+./customers-service serve
+----
+
+The above command starts the RESTful API server for the customers-service, the
+server is receiving requests by default on `localhost:8000`.
+
+The `serve` command has a number of flags one can configure, one can view them using the --help flag:
+
+[source]
+----
+./customers-service serve --help
+----
+
+== Example Usage:
+
+=== Adding Customers:
+
+To add a customer simple issue a `POST` request on
+`/api/customer_mgmt/v1/customers` supplying a Customer JSON object. e.g:
+
+[source]
+----
+curl \
+http://localhost:8000/api/customers_mgmt/v1/customers \
+-d '
+{
+  "name": "nimrod",
+  "owned_clusters": [
+    "cluster-id0",
+    "cluster-id1"
+  ]
+}
+'
+----
+
+A response for this request is a Customer object as stored by the
+customers-service, meaning, a response for the above request can look like:
+
+[source,json]
+----
+{
+  "id": "xxx-yyy-zzz",
+  "name": "nimrod",
+  "owned_clusters": [
+    "cluster-id0",
+    "cluster-id1"
+  ]
+}
+----
+
+In order to create a customer one has to supply at least a name in the JSON object,
+the other fields (meaning, `owned_clusters`) are not mandatory.
+
+=== Getting customers by ID:
+
+To get a customer by it's ID simply issue a `GET` request on
+`/api/customer_mgmt/v1/customers/{id}`. For example:
+
+[source]
+----
+curl http://localhost:8000/api/customers_mgmt/v1/customers/xxx-yyy-zzz
+----
+
+Should result with the following response:
+
+[source,json]
+----
+{
+  "id": "xxx-yyy-zzz",
+  "name": "nimrod",
+  "owned_clusters": [
+    "cluster-id0",
+    "cluster-id1"
+  ]
+}
+----
+
+=== Getting a customers list:
+
+One can retrieve a list of customers in two ways:
+
+To retrieve all customers in the customers-service (up to a limit of 100
+customers).
+
+[source]
+----
+curl http://localhost:8000/api/customers_mgmt/v1/customers
+----
+
+To retrieve customers by supplying page and size arguments:
+
+[source]
+----
+curl http://localhost:8000/api/customers_mgmt/v1/customers?page=X&size=Y
+----

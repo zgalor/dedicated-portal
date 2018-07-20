@@ -37,7 +37,7 @@ type CustomersService interface {
 	Get(id string) (*Customer, error)
 
 	// Close closes the service.
-	Close()
+	Close() error
 }
 
 // ListArguments are arguments relevant for listing objects

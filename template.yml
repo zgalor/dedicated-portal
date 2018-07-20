@@ -49,77 +49,6 @@ objects:
 - apiVersion: apps/v1beta1
   kind: Deployment
   metadata:
-    name: messaging-service
-    labels:
-      app: messaging-service
-  spec:
-    selector:
-      matchLabels:
-        app: messaging-service
-    replicas: 1
-    template:
-      metadata:
-        labels:
-          app: messaging-service
-      spec:
-        volumes:
-        - name: data
-          emptyDir: {}
-        containers:
-        - name: service
-          image: dedicated-portal/messaging-service:${VERSION}
-          imagePullPolicy: IfNotPresent
-          volumeMounts:
-          - name: data
-            mountPath: /var/lib/artemis
-
-- apiVersion: v1
-  kind: Service
-  metadata:
-    name: messaging-service
-    labels:
-      app: messaging-service
-  spec:
-    selector:
-      app: messaging-service
-    ports:
-    - name: console
-      port: 8161
-      targetPort: 8161
-    - name: acceptor
-      port: 61613
-      targetPort: 61613
-
-- apiVersion: v1
-  kind: Route
-  metadata:
-    name: messaging-console
-  spec:
-    host: messaging-console.${DOMAIN}
-    to:
-      kind: Service
-      name: messaging-service
-    port:
-      targetPort: console
-    tls:
-      termination: passthrough
-
-- apiVersion: v1
-  kind: Route
-  metadata:
-    name: messaging-service
-  spec:
-    host: messaging-service.${DOMAIN}
-    to:
-      kind: Service
-      name: messaging-service
-    port:
-      targetPort: acceptor
-    tls:
-      termination: passthrough
-- apiVersion: apps/v1beta1
-  kind: Deployment
-  metadata:
     name: clusters-service
     labels:
       app: clusters-service
@@ -137,6 +66,15 @@ objects:
         - name: service
           image: dedicated-portal/clusters-service:${VERSION}
           imagePullPolicy: IfNotPresent
+          args:
+          - serve
+          env:
+          - name: POSTGRESQL_DATABASE
+            value: clusters
+          - name: POSTGRESQL_USER
+            value: service
+          - name: POSTGRESQL_PASSWORD
+            value: ${PASSWORD}
           command:
           - /usr/local/bin/clusters-service
           ports:
@@ -187,51 +125,6 @@ objects:
 - apiVersion: apps/v1beta1
   kind: Deployment
   metadata:
-    name: customers-db
-    labels:
-      app: customers-db
-  spec:
-    selector:
-      matchLabels:
-        app: customers-db
-    replicas: 1
-    template:
-      metadata:
-        labels:
-          app: customers-db
-      spec:
-        volumes:
-        - name: data
-          emptyDir: {}
-        containers:
-        - name: etcd
-          image: quay.io/coreos/etcd:v3.1.11
-          imagePullPolicy: IfNotPresent
-          volumeMounts:
-          - name: data
-            mountPath: /var/lib/etcd
-          command:
-          - /usr/local/bin/etcd
-          - --data-dir=/var/lib/etcd
-          - --listen-client-urls=http://0.0.0.0:2379
-          - --advertise-client-urls=http://customers-db.${NAMESPACE}.svc.cluster.local:2379
-
-- apiVersion: v1
-  kind: Service
-  metadata:
-    name: customers-db
-    labels:
-      app: customers-db
-  spec:
-    selector:
-      app: customers-db
-    ports:
-    - port: 2379
-      targetPort: 2379
-
-- apiVersion: apps/v1beta1
-  kind: Deployment
-  metadata:
     name: customers-service
     labels:
       app: customers-service
@@ -249,8 +142,29 @@ objects:
         - name: service
           image: dedicated-portal/customers-service:${VERSION}
           imagePullPolicy: IfNotPresent
-          command:
-          - /usr/local/bin/customers-service
+          args:
+          - serve
+          - --sql-connection-string=host=localhost port=5432 user=service password=${PASSWORD} dbname=customers sslmode=disable
+          - --jwk-certs-url=https://developers.redhat.com/auth/realms/rhd/protocol/openid-connect/certs
+        - name: postgresql
+          image: centos/postgresql-94-centos7
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: POSTGRESQL_DATABASE
+            value: clusters
+          - name: POSTGRESQL_USER
+            value: service
+          - name: POSTGRESQL_PASSWORD
+            value: ${PASSWORD}
+          ports:
+          - containerPort: 5432
+            protocol: TCP
+          volumeMounts:
+          - mountPath: /var/lib/pgsql/data
+            name: data
+        volumes:
+        - emptyDir: {}
+          name: data
 
 - apiVersion: v1
   kind: Service
@@ -274,53 +188,5 @@ objects:
     to:
       kind: Service
       name: customers-service
-    tls:
-      termination: edge
-
-- apiVersion: apps/v1beta1
-  kind: Deployment
-  metadata:
-    name: customers-portal
-    labels:
-      app: customers-portal
-  spec:
-    selector:
-      matchLabels:
-        app: customers-portal
-    replicas: 1
-    template:
-      metadata:
-        labels:
-          app: customers-portal
-      spec:
-        containers:
-        - name: portal
-          image: dedicated-portal/customers-portal:${VERSION}
-          imagePullPolicy: IfNotPresent
-          command:
-          - /usr/local/bin/customers-webserver
-
-- apiVersion: v1
-  kind: Service
-  metadata:
-    name: customers-portal
-    labels:
-      app: customers-portal
-  spec:
-    selector:
-      app: customers-portal
-    ports:
-    - port: 8000
-      targetPort: 8000
-
-- apiVersion: v1
-  kind: Route
-  metadata:
-    name: customers-portal
-  spec:
-    host: customers-portal.${DOMAIN}
-    to:
-      kind: Service
-      name: customers-portal
     tls:
       termination: edge

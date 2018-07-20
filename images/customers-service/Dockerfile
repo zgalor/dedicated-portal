@@ -20,4 +20,10 @@ COPY customers-service /usr/local/bin/
 
 EXPOSE 8000
 
-CMD /usr/local/bin/customers-service
+CMD [ \
+    "serve" \
+]
+
+ENTRYPOINT [ \
+    "/usr/local/bin/customers-service" \
+]

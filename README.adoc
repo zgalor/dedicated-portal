@@ -7,7 +7,7 @@ management of _OpenShift_ clusters.
 
 == Building
 
-To build the project clone the repository in any directory and run the
+To build the project clone the repository into your `GOPATH` and run the
 `make` command.
 
 To build the container images run the `make images` command.
@@ -25,8 +25,6 @@ $ make tars
 $ ls *.tar | sort
 dedicated-portal_clusters-service_latest.tar
 dedicated-portal_customers-service_latest.tar
-dedicated-portal_customers-portal_latest.tar
-dedicated-portal_messaging-service_latest.tar
 ----
 
 Those `.tar` files can then be copied to the _OpenShift_ cluster, and
@@ -38,8 +36,6 @@ $ scp *.tar template.* myhost:.
 $ ssh root@myhost
 # docker load -i dedicated-portal_clusters-service_latest.tar
 # docker load -i dedicated-portal_customers-service_latest.tar
-# docker load -i dedicated-portal_customers-portal_latest.tar
-# docker load -i dedicated-portal_messaging-service_latest.tar
 ----
 
 Then the `template.sh` script can be used to create and populate the
@@ -53,9 +49,7 @@ NAME                                READY  STATUS   RESTARTS  AGE
 clusters-db-59dbb97d4f-qdmjw        1/1    Running  0         1m
 clusters-service-6b4877b885-k7zg2   1/1    Running  0         1m
 customers-db-6cc7fc8c49-7mh7t       1/1    Running  0         1m
-customers-portal-8474a9d5b7-6j1qt   1/1    Running  0         1m
 customers-service-7dfdf5b6b5-hqznw  1/1    Running  0         1m
-messaging-service-7474b9d5b7-6n2qt  1/1    Running  0         1m
 ----
 
 To undeploy the application remove the `dedicated-portal` namespace:

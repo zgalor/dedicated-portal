@@ -1,11 +1,11 @@
 openapi: 3.0.0
 info:
-  version: "0.1"
+  version: '0.1'
   title: Clusters Service Application.
   description: Clusters Service Application for the Openshift dedicated portal.
   license:
     name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0'
   contact:
     name: API Support
     email: TBD@redhat.com
@@ -14,7 +14,7 @@ paths:
     get:
       description: Returns lists of clusters
       responses:
-        "200":
+        '200':
           description: A list of clusters
           content:
             application/json:
@@ -25,7 +25,65 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+          description: |-
+            The first page to return results from
+            see size
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1000
+          description: |-
+            How many results to place in a page of results
+            see page
+      summary: ''
+    post:
+      description: Create a Cluster
+      responses:
+        '200':
+          description: The newly created Clustrer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cluster'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/clusters/{id}':
+    get:
+      description: Retrieves cluster by id
+      parameters:
+        - name: id
+          in: path
+          description: ID of cluster to show
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: information on a specific cluster
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cluster'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     Cluster:
@@ -44,10 +102,15 @@ components:
     Error:
       type: object
       required:
-      - message
-      - code
+        - message
+        - code
       properties:
         message:
           type: string
         code:
           type: integer
+  links: {}
+  callbacks: {}
+  securitySchemes: {}
+security: []
+servers: []

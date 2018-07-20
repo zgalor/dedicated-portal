@@ -1,14 +1,23 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 
+	"github.com/container-mgmt/dedicated-portal/pkg/signals"
+	"github.com/container-mgmt/dedicated-portal/pkg/sql"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/spf13/cobra"
 )
 
-// This file should be removed and replaced with a queue.
+var serveCmd = &cobra.Command{
+	Use:   "serve",
+	Short: "Serve the clusters service service",
+	Long:  "Serve the clusters service service.",
+	Run:   runServe,
+}
 
 // Server serves HTTP API requests on clusters.
 type Server struct {
@@ -25,23 +34,53 @@ func NewServer(stopCh <-chan struct{}, clusterService ClustersService) *Server {
 }
 
 func (s Server) start() error {
-	r := mux.NewRouter()
-	r.HandleFunc("/clusters", func(w http.ResponseWriter, r *http.Request) {
-		results, err := s.clusterService.List(ListArguments{})
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		b, err := json.Marshal(results)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		fmt.Fprintf(w, "%s", b)
+	// Create the main router:
+	mainRouter := mux.NewRouter()
 
-	}).Methods("GET")
+	// Create the API router:
+	apiRouter := mainRouter.PathPrefix("/api/clusters_mgmt/v1").Subrouter()
+	apiRouter.HandleFunc("/clusters", s.listClusters).Methods("GET")
+	apiRouter.HandleFunc("/clusters", s.createCluster).Methods("POST")
+	apiRouter.HandleFunc("/clusters/{uuid}", s.getCluster).Methods("GET")
+
+	// Enable the access log:
+	loggedRouter := handlers.LoggingHandler(os.Stdout, mainRouter)
+
 	fmt.Println("Listening.")
-	go http.ListenAndServe(":8000", r)
-	fmt.Println("Listened.")
+	go http.ListenAndServe(":8000", loggedRouter)
 	return nil
+}
+
+func runServe(*cobra.Command, []string) {
+	// Set up signals so we handle the first shutdown signal gracefully:
+	stopCh := signals.SetupHandler()
+	url := ConnectionURL()
+	err := sql.EnsureSchema(
+		"/usr/local/share/clusters-service/migrations",
+		url,
+	)
+	if err != nil {
+		panic(err)
+	}
+	service := NewClustersService(url)
+	fmt.Println("Created cluster service.")
+
+	// This is temporary and should be replaced with reading from the queue
+	server := NewServer(stopCh, service)
+	err = server.start()
+	if err != nil {
+		panic(fmt.Sprintf("Error starting server: %v", err))
+	}
+	fmt.Println("Created server.")
+
+	fmt.Println("Waiting for stop signal")
+	<-stopCh // wait until requested to stop.
+}
+
+// ConnectionURL generates a connection string from the environment.
+func ConnectionURL() string {
+	return fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable",
+		os.Getenv("POSTGRESQL_USER"),
+		os.Getenv("POSTGRESQL_PASSWORD"),
+		os.Getenv("POSTGRESQL_DATABASE"))
 }

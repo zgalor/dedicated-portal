@@ -19,54 +19,56 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
+	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 )
 
-// This is similar to the function in customers-webserver/utils.go
-// there's no point turning it into a shared file between the two workers
-// if the REST implementation is supposed to be removed later anyway.
-
-func getQueryParamInt(param string, defaultValue int64, r *http.Request) (value int64, err error) {
-	valueString, ok := r.URL.Query()[param]
-
-	if !ok || len(valueString) < 1 {
+func getQueryParamInt(key string, defaultValue int64, r *http.Request) (value int64, err error) {
+	valStr := r.URL.Query().Get(key)
+	if valStr == "" {
 		return defaultValue, nil
 	}
-
-	// This needs to be ParseInt and not Atoi because the interface asks for int64
-	value, err = strconv.ParseInt(valueString[0], 10, 64)
+	value, err = strconv.ParseInt(valStr, 10, 64)
 	return
 }
 
-func (server *Server) getAllCustomers(w http.ResponseWriter, r *http.Request) {
-	log.Println("GET /customers request")
+func (server *Server) getCustomersList(w http.ResponseWriter, r *http.Request) {
+	var ret *CustomersList
+	var err error
+	var page int64
+	var size int64
 
-	page, err := getQueryParamInt("page", 0, r)
+	// Get Query Parameters.
+	page, err = getQueryParamInt("page", 0, r)
 	if err != nil {
-		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("%v", err)})
+		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error listing customers, %v", err)})
 		return
 	}
 
-	size, err := getQueryParamInt("size", 100, r)
+	size, err = getQueryParamInt("size", defaultLimit, r)
 	if err != nil {
-		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("%v", err)})
+		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error listing customers, %v", err)})
 		return
 	}
 
-	ret, err := server.service.List(&ListArguments{Page: page, Size: size})
-	if err != nil {
-		writeJSONResponse(w, 500, map[string]string{"error": fmt.Sprintf("Error listing customers, %v", err)})
-	} else {
-		writeJSONResponse(w, 200, ret)
+	args := &ListArguments{
+		Page: page,
+		Size: size,
 	}
+
+	ret, err = server.service.List(args)
+	if err != nil {
+		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error listing customers, %v", err)})
+		return
+	}
+	writeJSONResponse(w, http.StatusOK, ret)
+
 }
 
 func (server *Server) addCustomer(w http.ResponseWriter, r *http.Request) {
-	log.Println("POST /customers request")
 	decoder := json.NewDecoder(r.Body)
 	var customer Customer
 	err := decoder.Decode(&customer)
@@ -76,26 +78,42 @@ func (server *Server) addCustomer(w http.ResponseWriter, r *http.Request) {
 	}
 	ret, err := server.service.Add(customer)
 	if err != nil {
-		writeJSONResponse(w, 500, map[string]string{"error": fmt.Sprintf("Error adding customer, %v", err)})
+		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error adding customer, %v", err)})
 	} else {
-		writeJSONResponse(w, 200, ret)
+		writeJSONResponse(w, http.StatusOK, ret)
 	}
 }
 
 func (server *Server) getCustomerByID(w http.ResponseWriter, r *http.Request) {
-	log.Println("GET /customers/{id} request")
 	id := mux.Vars(r)["id"]
 	ret, err := server.service.Get(id)
 	if err != nil {
-		writeJSONResponse(w, 500, map[string]string{"error": fmt.Sprintf("Error getting customer, %v", err)})
+		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error getting customer, %v", err)})
 	} else {
-		writeJSONResponse(w, 200, ret)
+		writeJSONResponse(w, http.StatusOK, ret)
 	}
 }
 
 func writeJSONResponse(w http.ResponseWriter, code int, payload interface{}) {
-	response, _ := json.Marshal(payload)
+	response, err := json.Marshal(payload)
+	if err != nil {
+		// If we can not marshal the payload, update response code and body.
+		glog.Errorf("Can't marshal json for response: %v", err)
+
+		response, err = json.Marshal(map[string]string{"error": fmt.Sprint(err)})
+		if err != nil {
+			response = []byte("{\"error\": \"can't marshal json for response\"}")
+		}
+		code = 500 // Internal server error code
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	w.Write(response)
+	responseWriterWriteWithLog(w, response)
+}
+
+func responseWriterWriteWithLog(w http.ResponseWriter, msg []byte) {
+	_, err := w.Write(msg)
+	if err != nil {
+		glog.Errorf("Write to client: %s", err)
+	}
 }
