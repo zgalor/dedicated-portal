@@ -38,7 +38,11 @@ func (s *DemoCustomersService) Add(customer Customer) (*Customer, error) {
 
 // Get retrieves a single customer from psql database.
 func (s *DemoCustomersService) Get(id string) (*Customer, error) {
-	return &Customer{}, nil
+	return &Customer{
+		ID:            "UNIQEID",
+		Name:          "Ari",
+		OwnedClusters: []string{"Eeast_cluster", "West_cluster"},
+	}, nil
 }
 
 // List retrieves a list of current customers stored in datastore.
@@ -46,15 +50,26 @@ func (s *DemoCustomersService) List(args *ListArguments) (*CustomersList, error)
 	var result *CustomersList
 
 	result = &CustomersList{
-		Items: []*Customer{},
+		Items: []*Customer{
+			{
+				ID:            "UNIQEID_1",
+				Name:          "Ari",
+				OwnedClusters: []string{"Eeast_cluster", "West_cluster"},
+			},
+			{
+				ID:            "UNIQEID_2",
+				Name:          "Bni",
+				OwnedClusters: []string{"West_cluster"},
+			},
+		},
 		Page:  0,
-		Size:  0,
-		Total: 0,
+		Size:  10,
+		Total: 2,
 	}
 
 	return result, nil
 }
 
 func (s *DemoCustomersService) getCustomersCount() (int64, error) {
-	return 0, nil
+	return 2, nil
 }
