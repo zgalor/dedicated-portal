@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package service
 
 // CustomersService is an interface exposing a set of operations required for
 // running and operating the customers of the Openshift Dedicated Portal.

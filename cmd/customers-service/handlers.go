@@ -24,7 +24,12 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
+
+	"github.com/container-mgmt/dedicated-portal/cmd/customers-service/service"
 )
+
+// Default number of items per page
+const defaultLimit = 1000
 
 func getQueryParamInt(key string, defaultValue int64, r *http.Request) (value int64, err error) {
 	valStr := r.URL.Query().Get(key)
@@ -36,7 +41,7 @@ func getQueryParamInt(key string, defaultValue int64, r *http.Request) (value in
 }
 
 func (server *Server) getCustomersList(w http.ResponseWriter, r *http.Request) {
-	var ret *CustomersList
+	var ret *service.CustomersList
 	var err error
 	var page int64
 	var size int64
@@ -54,7 +59,7 @@ func (server *Server) getCustomersList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	args := &ListArguments{
+	args := &service.ListArguments{
 		Page: page,
 		Size: size,
 	}
@@ -70,7 +75,7 @@ func (server *Server) getCustomersList(w http.ResponseWriter, r *http.Request) {
 
 func (server *Server) addCustomer(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-	var customer Customer
+	var customer service.Customer
 	err := decoder.Decode(&customer)
 	if err != nil {
 		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error decoding customer, %v", err)})

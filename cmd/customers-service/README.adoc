@@ -12,7 +12,7 @@ To set up the database and appropriate tables run:
 
 [source]
 ----
-psql -U postgres -a -f customers.sql
+psql -U postgres -a -f ./models/customers.sql
 ----
 
 == Command Line Interface

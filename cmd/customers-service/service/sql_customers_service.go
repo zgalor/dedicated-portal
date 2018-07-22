@@ -14,13 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package service
 
 import (
 	"database/sql"
 	"fmt"
 	"strings"
 
+	// Register the postgresql sql backend.
 	_ "github.com/lib/pq"
 	"github.com/segmentio/ksuid"
 )
@@ -31,10 +32,8 @@ type SQLCustomersService struct {
 	db *sql.DB
 }
 
-const defaultLimit = 1000
-
 // NewSQLCustomersService is a constructor for the SQLCustomersService struct.
-func NewSQLCustomersService(connStr string) (*SQLCustomersService, error) {
+func NewSQLCustomersService(connStr string) (CustomersService, error) {
 	db, err := sql.Open("postgres", connStr)
 
 	if err != nil {
@@ -47,12 +46,12 @@ func NewSQLCustomersService(connStr string) (*SQLCustomersService, error) {
 }
 
 // Close closes the sql customers service client.
-func (service *SQLCustomersService) Close() error {
-	return service.db.Close()
+func (s *SQLCustomersService) Close() error {
+	return s.db.Close()
 }
 
 // Add adds a single customer to psql database.
-func (service *SQLCustomersService) Add(customer Customer) (*Customer, error) {
+func (s *SQLCustomersService) Add(customer Customer) (*Customer, error) {
 	id, err := ksuid.NewRandom()
 	if err != nil {
 		return nil, err
@@ -69,7 +68,7 @@ func (service *SQLCustomersService) Add(customer Customer) (*Customer, error) {
 		result.OwnedClusters = customer.OwnedClusters
 	}
 
-	_, err = service.db.Exec(`
+	_, err = s.db.Exec(`
 		insert into customers (
 		id,
 		name
@@ -84,7 +83,7 @@ func (service *SQLCustomersService) Add(customer Customer) (*Customer, error) {
 	}
 
 	for _, cluster := range result.OwnedClusters {
-		_, err = service.db.Exec(`
+		_, err = s.db.Exec(`
 			insert into owned_clusters (
 				customer_id,
 				cluster_id
@@ -102,13 +101,13 @@ func (service *SQLCustomersService) Add(customer Customer) (*Customer, error) {
 }
 
 // Get retrieves a single customer from psql database.
-func (service *SQLCustomersService) Get(id string) (*Customer, error) {
+func (s *SQLCustomersService) Get(id string) (*Customer, error) {
 	var result Customer
 
 	// Get the customer information
 	// If not customer found return nil pointer and nil error.
 	// (See customers_service.go for more details)
-	rows, err := service.db.Query(`select name from customers where id=$1`, id)
+	rows, err := s.db.Query(`select name from customers where id=$1`, id)
 	if err != nil {
 		return nil, nil
 	}
@@ -122,7 +121,7 @@ func (service *SQLCustomersService) Get(id string) (*Customer, error) {
 
 	// Retrieve customer owned clusters.
 	ownedClusters := make([]string, 0)
-	rows, err = service.db.Query(`select cluster_id from owned_clusters
+	rows, err = s.db.Query(`select cluster_id from owned_clusters
 		where customer_id=$1`,
 		id)
 	if err != nil {
@@ -142,7 +141,7 @@ func (service *SQLCustomersService) Get(id string) (*Customer, error) {
 }
 
 // List retrieves a list of current customers stored in datastore.
-func (service *SQLCustomersService) List(args *ListArguments) (*CustomersList, error) {
+func (s *SQLCustomersService) List(args *ListArguments) (*CustomersList, error) {
 	var result *CustomersList
 	var rows *sql.Rows
 	var err error
@@ -154,11 +153,11 @@ func (service *SQLCustomersService) List(args *ListArguments) (*CustomersList, e
 		numOfItems = args.Size
 	} else {
 		page = 0
-		numOfItems = defaultLimit
+		numOfItems = 0
 	}
 
 	// Retrieve customers id's and names.
-	rows, err = service.db.Query(`select id, name from customers
+	rows, err = s.db.Query(`select id, name from customers
 		 limit $1 offset $2`,
 		numOfItems, numOfItems*page)
 	if err != nil {
@@ -194,7 +193,7 @@ func (service *SQLCustomersService) List(args *ListArguments) (*CustomersList, e
 
 		// Retrieve customers owned clusters.
 		customersToClusters := make(map[string][]string)
-		rows, err = service.db.Query(query)
+		rows, err = s.db.Query(query)
 		if err != nil {
 			return nil, err
 		}
@@ -216,7 +215,7 @@ func (service *SQLCustomersService) List(args *ListArguments) (*CustomersList, e
 		}
 	}
 
-	total, err := service.getCustomersCount()
+	total, err := s.getCustomersCount()
 	if err != nil {
 		return nil, err
 	}
@@ -231,10 +230,10 @@ func (service *SQLCustomersService) List(args *ListArguments) (*CustomersList, e
 	return result, nil
 }
 
-func (service *SQLCustomersService) getCustomersCount() (int64, error) {
+func (s *SQLCustomersService) getCustomersCount() (int64, error) {
 	// retrieve total number of customers.
 	var total int64
-	err := service.db.QueryRow("select  count(*) from customers").Scan(&total)
+	err := s.db.QueryRow("select count(*) from customers").Scan(&total)
 	if err != nil {
 		return 0, err
 	}

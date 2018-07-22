@@ -32,11 +32,12 @@ import (
 	"github.com/urfave/negroni"
 
 	"github.com/container-mgmt/dedicated-portal/cmd/customers-service/jwtcert"
+	"github.com/container-mgmt/dedicated-portal/cmd/customers-service/service"
 )
 
 // Server serves REST API requests on clusters.
 type Server struct {
-	service CustomersService
+	service service.CustomersService
 }
 
 var serveArgs struct {
@@ -45,12 +46,13 @@ var serveArgs struct {
 	jwkCertURL        string
 	sqlConnStr        string
 	notificationTopic string
+	demoMode          bool
 }
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
-	Short: "Serve the customers service service",
-	Long:  "Serve the customers service service.",
+	Short: "Serve the customers service",
+	Long:  "Serve the customers service.",
 	Run:   runServe,
 }
 
@@ -74,6 +76,12 @@ func init() {
 		"",
 		"The url endpoint for the JWK certs.",
 	)
+	flags.BoolVar(
+		&serveArgs.demoMode,
+		"demo-mode",
+		false,
+		"Run in demo mode (node token needed, return demo data).",
+	)
 	flags.StringVar(
 		&serveArgs.sqlConnStr,
 		"sql-connection-string",
@@ -89,41 +97,36 @@ func init() {
 }
 
 // InitServer is a constructor for the Server struct.
-func initServer(service CustomersService) (server *Server) {
+func initServer(s service.CustomersService) (server *Server) {
 	server = new(Server)
-	server.service = service
+	server.service = s
 	return server
 }
 
 func runServe(cmd *cobra.Command, args []string) {
+	var err error
+	var s service.CustomersService
+	var loggedRouter http.Handler
+
 	// Try to connect to SQLCustomersService
-	service, err := NewSQLCustomersService(serveArgs.sqlConnStr)
-	check(err, "Can't connect to sql service")
-	defer service.Close()
-
-	// Verify that we have cert URL
-	if serveArgs.jwkCertURL == "" {
-		check(fmt.Errorf("flag missing: --jwk-certs-url"), "No cert URL defined")
+	//
+	// If not in demo mode, try to connect to the sql server.
+	// If we are in demo mode, connect to a demo data source.
+	if serveArgs.demoMode == false {
+		// Connect to the SQL service.
+		s, err = service.NewSQLCustomersService(serveArgs.sqlConnStr)
+	} else {
+		// Connect to the Demo service.
+		s, err = service.NewDemoCustomersService(serveArgs.sqlConnStr)
 	}
-
-	// Try to read the JWT public key object file.
-	jwtCert, err := jwtcert.DownloadAsPEM(serveArgs.jwkCertURL)
-	check(
-		err,
-		fmt.Sprintf(
-			"Can't download JWK certificate from URL '%s'",
-			serveArgs.jwkCertURL,
-		),
-	)
+	check(err, "Can't connect to sql service")
+	defer s.Close()
 
 	// Create server URL.
 	serverAddress := fmt.Sprintf("%s:%d", serveArgs.host, serveArgs.port)
 
-	// Inform user we are starting.
-	glog.Infof("Starting customers-service server at %s.", serverAddress)
-
 	// Start server.
-	server := initServer(service)
+	server := initServer(s)
 	defer server.Close()
 
 	// Create the main router:
@@ -139,23 +142,52 @@ func runServe(cmd *cobra.Command, args []string) {
 		Methods("GET").
 		HandlerFunc(server.getCustomersList)
 
-	// JWT Middleware
-	jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
-		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
-			result, _ := jwt.ParseRSAPublicKeyFromPEM([]byte(jwtCert))
-			return result, nil
-		},
-		ErrorHandler:  onAuthError,
-		SigningMethod: jwt.SigningMethodRS256,
-	})
+	// If not in demo mode, check JWK and add a JWT middleware:
+	//
+	// When running on demo mode we want to bypass the JWT check
+	// and serve mock data.
+	if serveArgs.demoMode == false {
+		// Check for JWK cert cli arg:
+		if serveArgs.jwkCertURL == "" {
+			check(fmt.Errorf("flag missing: --jwk-certs-url"), "No cert URL defined")
+		}
 
-	// Enable the access authentication:
-	authRouter := negroni.New(
-		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext))
-	authRouter.UseHandler(mainRouter)
+		// Try to read the JWT public key object file.
+		jwtCert, err := jwtcert.DownloadAsPEM(serveArgs.jwkCertURL)
+		check(
+			err,
+			fmt.Sprintf(
+				"Can't download JWK certificate from URL '%s'",
+				serveArgs.jwkCertURL,
+			),
+		)
 
-	// Enable the access log:
-	loggedRouter := handlers.LoggingHandler(os.Stdout, authRouter)
+		// Add the JWT Middleware
+		jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
+			ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
+				result, _ := jwt.ParseRSAPublicKeyFromPEM([]byte(jwtCert))
+				return result, nil
+			},
+			ErrorHandler:  onAuthError,
+			SigningMethod: jwt.SigningMethodRS256,
+		})
+
+		// Enable the access authentication:
+		authRouter := negroni.New(
+			negroni.HandlerFunc(jwtMiddleware.HandlerWithNext))
+		authRouter.UseHandler(mainRouter)
+
+		// Enable the access log:
+		loggedRouter = handlers.LoggingHandler(os.Stdout, authRouter)
+	} else {
+		// On demo mode, just log requests:
+
+		// Enable the access log:
+		loggedRouter = handlers.LoggingHandler(os.Stdout, mainRouter)
+	}
+
+	// Inform user we are starting.
+	glog.Infof("Starting customers-service server at %s.", serverAddress)
 
 	// ListenAndServe
 	log.Fatal(http.ListenAndServe(serverAddress, loggedRouter))
