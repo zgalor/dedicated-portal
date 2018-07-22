@@ -29,7 +29,7 @@ import (
 )
 
 // Default number of items per page
-const defaultLimit = 1000
+const defaultLimit = 100
 
 func getQueryParamInt(key string, defaultValue int64, r *http.Request) (value int64, err error) {
 	valStr := r.URL.Query().Get(key)
