@@ -109,7 +109,7 @@ func (s *SQLCustomersService) Get(id string) (*Customer, error) {
 	// (See customers_service.go for more details)
 	rows, err := s.db.Query(`select name from customers where id=$1`, id)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	for rows.Next() {
