@@ -25,7 +25,7 @@ import urllib.request
 from pathlib import Path
 
 # The file to parse and run the codegen on.
-INPUT_FILE = "../customers-service.yaml"
+INPUT_FILE = "./customers-service.yaml"
 
 SWAGGER_CODEGEN_CLI = "swagger-codegen-cli.jar"
 SWAGGER_VER = "3.0.0-rc1"
