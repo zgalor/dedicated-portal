@@ -26,6 +26,7 @@ binaries: vendor
 		cd -; \
 	done
 
+.PHONY: vendor
 vendor:
 	dep ensure -vendor-only -v
 
