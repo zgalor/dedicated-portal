@@ -23,13 +23,11 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/auth0/go-jwt-middleware"
-	"github.com/urfave/negroni"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
+	"github.com/urfave/negroni"
 
 	"github.com/container-mgmt/dedicated-portal/cmd/customers-service/jwtcert"
 )

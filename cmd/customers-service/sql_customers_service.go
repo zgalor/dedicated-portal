@@ -19,9 +19,10 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"strings"
+
 	_ "github.com/lib/pq"
 	"github.com/segmentio/ksuid"
-	"strings"
 )
 
 // SQLCustomersService is a struct implementing the customer service interface,
