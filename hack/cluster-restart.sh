@@ -16,6 +16,8 @@
 # limitations under the License.
 #
 
+cd "$(dirname "$0")"/..
+
 oc cluster down
 make images
 oc cluster up
