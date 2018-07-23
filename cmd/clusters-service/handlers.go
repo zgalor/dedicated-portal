@@ -59,7 +59,7 @@ func (s Server) createCluster(w http.ResponseWriter, r *http.Request) {
 		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("%v", err)})
 		return
 	}
-	if spec.UUID != "" {
+	if spec.ID != "" {
 		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "id must be empty"})
 		return
 	}
@@ -72,12 +72,12 @@ func (s Server) createCluster(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s Server) getCluster(w http.ResponseWriter, r *http.Request) {
-	uuid := mux.Vars(r)["uuid"]
-	if uuid == "" {
-		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "no uuid provided"})
+	id := mux.Vars(r)["id"]
+	if id == "" {
+		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "no id provided"})
 		return
 	}
-	cluster, err := s.clusterService.Get(uuid)
+	cluster, err := s.clusterService.Get(id)
 	if err != nil {
 		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("%v", err)})
 		return

@@ -89,11 +89,11 @@ components:
     Cluster:
       required:
         - name
-        - uuid
+        - id
       properties:
         name:
           type: string
-        uuid:
+        id:
           type: string
     ClustersList:
       type: array

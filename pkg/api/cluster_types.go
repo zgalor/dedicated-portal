@@ -20,7 +20,7 @@ package api
 
 // Cluster represents a cluster.
 type Cluster struct {
-	UUID    string          `json:"id,omitempty"`
+	ID      string          `json:"id,omitempty"`
 	Name    string          `json:"name,omitempty"`
 	Nodes   ClusterNodes    `json:"nodes,omitempty"`
 	Memory  ClusterResource `json:"memory,omitempty"`
