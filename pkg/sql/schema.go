@@ -14,11 +14,11 @@ import (
 
 // EnsureSchema makes sure our DB's schema matches that defined by schemaPath.
 // It migrates it if needed and returns error if it can't do so.
-func EnsureSchema(schemaPath, connectionUrl string) error {
-	waitForDatabase(connectionUrl)
+func EnsureSchema(schemaPath, connectionURL string) error {
+	waitForDatabase(connectionURL)
 	m, err := migrate.New(
 		fmt.Sprintf("file:///%s", schemaPath),
-		connectionUrl,
+		connectionURL,
 	)
 	if err != nil {
 		return fmt.Errorf("migrate.New: %v", err)
@@ -40,9 +40,9 @@ func EnsureSchema(schemaPath, connectionUrl string) error {
 	return nil
 }
 
-func waitForDatabase(connectionUrl string) {
+func waitForDatabase(connectionURL string) {
 	for {
-		err := tryConnect(connectionUrl)
+		err := tryConnect(connectionURL)
 		if err != nil {
 			fmt.Println("Could not connect: ", err)
 			time.Sleep(500 * time.Millisecond)

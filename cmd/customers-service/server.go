@@ -32,13 +32,14 @@ import (
 
 	"github.com/container-mgmt/dedicated-portal/cmd/customers-service/service"
 	"github.com/container-mgmt/dedicated-portal/pkg/auth"
+	"github.com/container-mgmt/dedicated-portal/pkg/sql"
 )
 
 var serveArgs struct {
 	host              string
 	port              int
 	jwkCertURL        string
-	sqlConnStr        string
+	dbURL             string
 	notificationTopic string
 	demoMode          bool
 }
@@ -65,6 +66,12 @@ func init() {
 		"The port number of the server.",
 	)
 	flags.StringVar(
+		&serveArgs.dbURL,
+		"db-url",
+		"",
+		"The database connection url.",
+	)
+	flags.StringVar(
 		&serveArgs.jwkCertURL,
 		"jwk-certs-url",
 		"",
@@ -75,12 +82,6 @@ func init() {
 		"demo-mode",
 		false,
 		"Run in demo mode (node token needed, return demo data).",
-	)
-	flags.StringVar(
-		&serveArgs.sqlConnStr,
-		"sql-connection-string",
-		"host=localhost port=5432 user=postgres password=1234 dbname=customers sslmode=disable",
-		"The connection string for connection to sql datastore.",
 	)
 	flags.StringVar(
 		&serveArgs.notificationTopic,
@@ -100,11 +101,22 @@ func runServe(cmd *cobra.Command, args []string) {
 	// If not in demo mode, try to connect to the sql server.
 	// If we are in demo mode, connect to a demo data source.
 	if serveArgs.demoMode == false {
-		// Connect to the SQL service.
-		s, err = service.NewSQLCustomersService(serveArgs.sqlConnStr)
+		// Check for db url cli arg:
+		if serveArgs.dbURL == "" {
+			check(fmt.Errorf("flag missing: --db-url"), "No db URL defined")
+		}
+
+		err := sql.EnsureSchema(
+			"/usr/local/share/customers-service/migrations",
+			serveArgs.dbURL,
+		)
+		if err != nil {
+			panic(err)
+		}
+		s, err = service.NewSQLCustomersService(serveArgs.dbURL)
 	} else {
 		// Connect to the Demo service.
-		s, err = service.NewDemoCustomersService(serveArgs.sqlConnStr)
+		s, err = service.NewDemoCustomersService()
 	}
 	check(err, "Can't connect to sql service")
 	defer s.Close()

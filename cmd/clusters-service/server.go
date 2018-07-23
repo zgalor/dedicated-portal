@@ -7,10 +7,15 @@ import (
 
 	"github.com/container-mgmt/dedicated-portal/pkg/signals"
 	"github.com/container-mgmt/dedicated-portal/pkg/sql"
+	"github.com/golang/glog"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 )
+
+var serveArgs struct {
+	dbURL string
+}
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
@@ -23,6 +28,16 @@ var serveCmd = &cobra.Command{
 type Server struct {
 	stopCh         <-chan struct{}
 	clusterService ClustersService
+}
+
+func init() {
+	flags := serveCmd.Flags()
+	flags.StringVar(
+		&serveArgs.dbURL,
+		"db-url",
+		"",
+		"The database connection url.",
+	)
 }
 
 // NewServer creates a new server.
@@ -54,15 +69,22 @@ func (s Server) start() error {
 func runServe(*cobra.Command, []string) {
 	// Set up signals so we handle the first shutdown signal gracefully:
 	stopCh := signals.SetupHandler()
-	url := ConnectionURL()
+
+	// Check for db url cli arg:
+	if serveArgs.dbURL == "" {
+		glog.Errorf("flag missing: --db-url")
+		os.Exit(1)
+	}
+
 	err := sql.EnsureSchema(
 		"/usr/local/share/clusters-service/migrations",
-		url,
+		serveArgs.dbURL,
 	)
 	if err != nil {
-		panic(err)
+		glog.Errorf("can't run sql migration: %s", err)
+		os.Exit(1)
 	}
-	service := NewClustersService(url)
+	service := NewClustersService(serveArgs.dbURL)
 	fmt.Println("Created cluster service.")
 
 	// This is temporary and should be replaced with reading from the queue
@@ -75,12 +97,4 @@ func runServe(*cobra.Command, []string) {
 
 	fmt.Println("Waiting for stop signal")
 	<-stopCh // wait until requested to stop.
-}
-
-// ConnectionURL generates a connection string from the environment.
-func ConnectionURL() string {
-	return fmt.Sprintf("postgres://%s:%s@localhost:5432/%s?sslmode=disable",
-		os.Getenv("POSTGRESQL_USER"),
-		os.Getenv("POSTGRESQL_PASSWORD"),
-		os.Getenv("POSTGRESQL_DATABASE"))
 }
