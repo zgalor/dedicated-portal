@@ -133,12 +133,12 @@ func runServe(cmd *cobra.Command, args []string) {
 
 	// Create the API router:
 	apiRouter := mainRouter.PathPrefix("/api/customers_mgmt/v1").Subrouter()
-	apiRouter.HandleFunc("/customers", server.getCustomersList).Methods("GET")
-	apiRouter.HandleFunc("/customers", server.addCustomer).Methods("POST")
-	apiRouter.HandleFunc("/customers/{id}", server.getCustomerByID).Methods("GET")
+	apiRouter.HandleFunc("/customers", server.getCustomersList).Methods(http.MethodGet)
+	apiRouter.HandleFunc("/customers", server.addCustomer).Methods(http.MethodPost)
+	apiRouter.HandleFunc("/customers/{id}", server.getCustomerByID).Methods(http.MethodGet)
 	apiRouter.Path("/customers").
 		Queries("page", "{[0-9]+}", "size", "{[0-9]+}").
-		Methods("GET").
+		Methods(http.MethodGet).
 		HandlerFunc(server.getCustomersList)
 
 	// If not in demo mode, check JWK and add a JWT middleware:
