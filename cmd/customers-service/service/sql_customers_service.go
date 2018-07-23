@@ -24,6 +24,8 @@ import (
 	// Register the postgresql sql backend.
 	_ "github.com/lib/pq"
 	"github.com/segmentio/ksuid"
+
+	"github.com/container-mgmt/dedicated-portal/pkg/api"
 )
 
 // SQLCustomersService is a struct implementing the customer service interface,
@@ -51,13 +53,13 @@ func (s *SQLCustomersService) Close() error {
 }
 
 // Add adds a single customer to psql database.
-func (s *SQLCustomersService) Add(customer Customer) (*Customer, error) {
+func (s *SQLCustomersService) Add(customer api.Customer) (*api.Customer, error) {
 	id, err := ksuid.NewRandom()
 	if err != nil {
 		return nil, err
 	}
 
-	result := Customer{
+	result := api.Customer{
 		ID:   id.String(),
 		Name: customer.Name,
 	}
@@ -101,8 +103,8 @@ func (s *SQLCustomersService) Add(customer Customer) (*Customer, error) {
 }
 
 // Get retrieves a single customer from psql database.
-func (s *SQLCustomersService) Get(id string) (*Customer, error) {
-	var result Customer
+func (s *SQLCustomersService) Get(id string) (*api.Customer, error) {
+	var result api.Customer
 
 	// Get the customer information
 	// If not customer found return nil pointer and nil error.
@@ -141,8 +143,8 @@ func (s *SQLCustomersService) Get(id string) (*Customer, error) {
 }
 
 // List retrieves a list of current customers stored in datastore.
-func (s *SQLCustomersService) List(args *ListArguments) (*CustomersList, error) {
-	var result *CustomersList
+func (s *SQLCustomersService) List(args *ListArguments) (*api.CustomerList, error) {
+	var result *api.CustomerList
 	var rows *sql.Rows
 	var err error
 	var page int64
@@ -165,10 +167,10 @@ func (s *SQLCustomersService) List(args *ListArguments) (*CustomersList, error) 
 	}
 
 	// Populate customers id's and names in their corresponding customers struct.
-	items := make([]*Customer, 0, numOfItems)
+	items := make([]*api.Customer, 0, numOfItems)
 	ids := make([]string, 0, numOfItems)
 	for rows.Next() {
-		var customer Customer
+		var customer api.Customer
 		if err = rows.Scan(&customer.ID, &customer.Name); err != nil {
 			return nil, err
 		}
@@ -220,7 +222,7 @@ func (s *SQLCustomersService) List(args *ListArguments) (*CustomersList, error) 
 		return nil, err
 	}
 
-	result = &CustomersList{
+	result = &api.CustomerList{
 		Items: items,
 		Page:  page,
 		Size:  int64(len(items)),

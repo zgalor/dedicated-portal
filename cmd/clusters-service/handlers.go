@@ -24,6 +24,8 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+
+	"github.com/container-mgmt/dedicated-portal/pkg/api"
 )
 
 func (s Server) listClusters(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +53,7 @@ func (s Server) createCluster(w http.ResponseWriter, r *http.Request) {
 		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("%v", err)})
 		return
 	}
-	var spec Cluster
+	var spec api.Cluster
 	err = json.Unmarshal(bytes, &spec)
 	if err != nil {
 		writeJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": fmt.Sprintf("%v", err)})

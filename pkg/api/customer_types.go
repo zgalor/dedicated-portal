@@ -14,12 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package service
+// This file contains the API types used by the customers service.
 
-// Customer struct is the internatl object representing information on
-// a single Customer.
+package api
+
+// Customer represents a customer.
 type Customer struct {
 	ID            string   `json:"id"`
 	Name          string   `json:"name"`
 	OwnedClusters []string `json:"owned_clusters"`
+}
+
+// CustomerList struct represents a list of customers.
+type CustomerList struct {
+	Page  int64       `json:"page,omitempty"`
+	Size  int64       `json:"size"`
+	Total int64       `json:"total"`
+	Items []*Customer `json:"items"`
 }

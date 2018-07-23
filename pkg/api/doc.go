@@ -14,12 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package service
-
-// CustomersList struct is the internal object representing a list of Customers.
-type CustomersList struct {
-	Page  int64       `json:"page, omitempty"`
-	Size  int64       `json:"size"`
-	Total int64       `json:"total"`
-	Items []*Customer `json:"items"`
-}
+// Package api contains the definitions of the types that are used in the APIs of the services.
+// These types will be kept stable, backwards compatible and in sync with the OpenAPI specifications
+// of the services.
+package api
