@@ -68,14 +68,7 @@ objects:
           imagePullPolicy: IfNotPresent
           args:
           - serve
-          - --db-url=postgres://service:${PASSWORD}@localhost:5432/customers?sslmode=disable
-          env:
-          - name: POSTGRESQL_DATABASE
-            value: clusters
-          - name: POSTGRESQL_USER
-            value: service
-          - name: POSTGRESQL_PASSWORD
-            value: ${PASSWORD}
+          - --db-url=postgres://service:${PASSWORD}@localhost:5432/clusters?sslmode=disable
           command:
           - /usr/local/bin/clusters-service
           ports:
