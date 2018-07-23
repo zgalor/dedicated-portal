@@ -68,6 +68,7 @@ objects:
           imagePullPolicy: IfNotPresent
           args:
           - serve
+          - --db-url=postgres://service:${PASSWORD}@localhost:5432/customers?sslmode=disable
           env:
           - name: POSTGRESQL_DATABASE
             value: clusters
@@ -144,7 +145,7 @@ objects:
           imagePullPolicy: IfNotPresent
           args:
           - serve
-          - --sql-connection-string=host=localhost port=5432 user=service password=${PASSWORD} dbname=customers sslmode=disable
+          - --db-url=postgres://service:${PASSWORD}@localhost:5432/customers?sslmode=disable
           - --jwk-certs-url=https://developers.redhat.com/auth/realms/rhd/protocol/openid-connect/certs
         - name: postgresql
           image: centos/postgresql-94-centos7

@@ -21,7 +21,7 @@ type DemoCustomersService struct {
 }
 
 // NewDemoCustomersService is a constructor for the SQLCustomersService struct.
-func NewDemoCustomersService(connStr string) (CustomersService, error) {
+func NewDemoCustomersService() (CustomersService, error) {
 	service := new(DemoCustomersService)
 	return service, nil
 }
