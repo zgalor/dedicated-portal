@@ -26,6 +26,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/container-mgmt/dedicated-portal/cmd/customers-service/service"
+	"github.com/container-mgmt/dedicated-portal/pkg/api"
 	"github.com/container-mgmt/dedicated-portal/pkg/auth"
 )
 
@@ -50,7 +51,7 @@ func (server *Server) Close() error {
 }
 
 func (server *Server) getCustomersList(w http.ResponseWriter, r *http.Request) {
-	var ret *service.CustomersList
+	var ret *api.CustomerList
 	var err error
 	var page int64
 	var size int64
@@ -91,7 +92,7 @@ func (server *Server) getCustomersList(w http.ResponseWriter, r *http.Request) {
 
 func (server *Server) addCustomer(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-	var customer service.Customer
+	var customer api.Customer
 
 	// Check token authorization
 	if _, err := auth.CheckToken(w, r); err != nil {
@@ -115,7 +116,7 @@ func (server *Server) addCustomer(w http.ResponseWriter, r *http.Request) {
 
 func (server *Server) getCustomerByID(w http.ResponseWriter, r *http.Request) {
 	var sub string
-	var ret *service.Customer
+	var ret *api.Customer
 	var err error
 
 	id := mux.Vars(r)["id"]

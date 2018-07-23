@@ -6,13 +6,15 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/segmentio/ksuid"
+
+	"github.com/container-mgmt/dedicated-portal/pkg/api"
 )
 
 // ClustersService performs operations on clusters.
 type ClustersService interface {
-	List(args ListArguments) (clusters ClustersResult, err error)
-	Create(spec Cluster) (result Cluster, err error)
-	Get(uuid string) (result Cluster, err error)
+	List(args ListArguments) (clusters api.ClusterList, err error)
+	Create(spec api.Cluster) (result api.Cluster, err error)
+	Get(uuid string) (result api.Cluster, err error)
 }
 
 // GenericClustersService is a ClusterService placeholder implementation.
@@ -26,38 +28,6 @@ type ListArguments struct {
 	Size int
 }
 
-// ClustersResult is a result for a List request of Clusters.
-type ClustersResult struct {
-	Page  int       `json:"page"`
-	Size  int       `json:"size"`
-	Total int       `json:"total"`
-	Items []Cluster `json:"items"`
-}
-
-// Cluster represents an OpenShift cluster.
-type Cluster struct {
-	UUID    string          `json:"id,omitempty"`
-	Name    string          `json:"name,omitempty"`
-	Nodes   ClusterNodes    `json:"nodes,omitempty"`
-	Memory  ClusterResource `json:"memory,omitempty"`
-	CPU     ClusterResource `json:"cpu,omitempty"`
-	Storage ClusterResource `json:"storage,omitempty"`
-}
-
-// ClusterResource represents a resource availability in the cluster
-type ClusterResource struct {
-	Used  int `json:"used,omitempty"`
-	Total int `json:"total,omitempty"`
-}
-
-// ClusterNodes represents the node count inside a cluster
-type ClusterNodes struct {
-	Total   int `json:"total,omitempty"`
-	Master  int `json:"master,omitempty"`
-	Infra   int `json:"infra,omitempty"`
-	Compute int `json:"compute,omitempty"`
-}
-
 // NewClustersService Creates a new ClustersService.
 func NewClustersService(connectionUrl string) ClustersService {
 	service := new(GenericClustersService)
@@ -66,11 +36,11 @@ func NewClustersService(connectionUrl string) ClustersService {
 }
 
 // List returns lists of clusters.
-func (cs GenericClustersService) List(args ListArguments) (result ClustersResult, err error) {
-	result.Items = make([]Cluster, 0)
+func (cs GenericClustersService) List(args ListArguments) (result api.ClusterList, err error) {
+	result.Items = make([]*api.Cluster, 0)
 	db, err := sql.Open("postgres", cs.connectionUrl)
 	if err != nil {
-		return ClustersResult{}, fmt.Errorf("Error openning connection: %v", err)
+		return api.ClusterList{}, fmt.Errorf("Error openning connection: %v", err)
 	}
 	defer db.Close()
 	rows, err := db.Query(`SELECT uuid, name
@@ -82,23 +52,23 @@ func (cs GenericClustersService) List(args ListArguments) (result ClustersResult
 		args.Page*args.Size,
 	)
 	if err != nil {
-		return ClustersResult{}, fmt.Errorf("Error executing query: %v", err)
+		return api.ClusterList{}, fmt.Errorf("Error executing query: %v", err)
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var uuid, name string
 		err = rows.Scan(&uuid, &name)
 		if err != nil {
-			return ClustersResult{}, err
+			return api.ClusterList{}, err
 		}
-		result.Items = append(result.Items, Cluster{
+		result.Items = append(result.Items, &api.Cluster{
 			Name: name,
 			UUID: uuid,
 		})
 	}
 	err = rows.Err() // get any error encountered during iteration
 	if err != nil {
-		return ClustersResult{}, err
+		return api.ClusterList{}, err
 	}
 	result.Page = args.Page
 	result.Size = len(result.Items)
@@ -106,14 +76,14 @@ func (cs GenericClustersService) List(args ListArguments) (result ClustersResult
 }
 
 // Create saves a new cluster definition in the Database
-func (cs GenericClustersService) Create(spec Cluster) (result Cluster, err error) {
+func (cs GenericClustersService) Create(spec api.Cluster) (result api.Cluster, err error) {
 	uuid, err := ksuid.NewRandom()
 	if err != nil {
-		return Cluster{}, err
+		return api.Cluster{}, err
 	}
 	db, err := sql.Open("postgres", cs.connectionUrl)
 	if err != nil {
-		return Cluster{}, err
+		return api.Cluster{}, err
 	}
 	defer db.Close()
 	stmt, err := db.Prepare(`
@@ -137,7 +107,7 @@ func (cs GenericClustersService) Create(spec Cluster) (result Cluster, err error
 			$8)
 	`)
 	if err != nil {
-		return Cluster{}, err
+		return api.Cluster{}, err
 	}
 	defer stmt.Close()
 	queryResult, err := stmt.Exec(
@@ -150,35 +120,35 @@ func (cs GenericClustersService) Create(spec Cluster) (result Cluster, err error
 		spec.CPU.Total,
 		spec.Storage.Total)
 	if err != nil {
-		return Cluster{}, err
+		return api.Cluster{}, err
 	}
 	inserted, err := queryResult.RowsAffected()
 	if err != nil {
-		return Cluster{}, err
+		return api.Cluster{}, err
 	}
 	if inserted != 1 {
-		return Cluster{}, fmt.Errorf("Error: [%d] rows inserted. 1 expected",
+		return api.Cluster{}, fmt.Errorf("Error: [%d] rows inserted. 1 expected",
 			inserted,
 		)
 	}
 
 	totalNodes := spec.Nodes.Master + spec.Nodes.Infra + spec.Nodes.Compute
-	return Cluster{
+	return api.Cluster{
 		Name: spec.Name,
 		UUID: fmt.Sprintf("%s", uuid),
-		Nodes: ClusterNodes{
+		Nodes: api.ClusterNodes{
 			Total:   totalNodes,
 			Master:  spec.Nodes.Master,
 			Infra:   spec.Nodes.Infra,
 			Compute: spec.Nodes.Compute,
 		},
-		Memory: ClusterResource{
+		Memory: api.ClusterResource{
 			Total: spec.Memory.Total,
 		},
-		CPU: ClusterResource{
+		CPU: api.ClusterResource{
 			Total: spec.CPU.Total,
 		},
-		Storage: ClusterResource{
+		Storage: api.ClusterResource{
 			Total: spec.Storage.Total,
 		},
 	}, nil
@@ -186,10 +156,10 @@ func (cs GenericClustersService) Create(spec Cluster) (result Cluster, err error
 }
 
 // Get returns a single cluster by id
-func (cs GenericClustersService) Get(uuid string) (result Cluster, err error) {
+func (cs GenericClustersService) Get(uuid string) (result api.Cluster, err error) {
 	db, err := sql.Open("postgres", cs.connectionUrl)
 	if err != nil {
-		return Cluster{}, err
+		return api.Cluster{}, err
 	}
 	defer db.Close()
 	var (
@@ -205,25 +175,25 @@ func (cs GenericClustersService) Get(uuid string) (result Cluster, err error) {
 	err = db.QueryRow("SELECT uuid, name, master_nodes, infra_nodes, compute_nodes, memory, cpu_cores, storage FROM clusters	WHERE uuid = $1", uuid).Scan(
 		&uuid, &name, &masterNodes, &infraNodes, &computeNodes, &memory, &cpuCores, &storage)
 	if err != nil {
-		return Cluster{}, err
+		return api.Cluster{}, err
 	}
 	totalNodes := masterNodes + infraNodes + computeNodes
-	return Cluster{
+	return api.Cluster{
 			Name: name,
 			UUID: uuid,
-			Nodes: ClusterNodes{
+			Nodes: api.ClusterNodes{
 				Total:   totalNodes,
 				Master:  masterNodes,
 				Infra:   infraNodes,
 				Compute: computeNodes,
 			},
-			Memory: ClusterResource{
+			Memory: api.ClusterResource{
 				Total: memory,
 			},
-			CPU: ClusterResource{
+			CPU: api.ClusterResource{
 				Total: cpuCores,
 			},
-			Storage: ClusterResource{
+			Storage: api.ClusterResource{
 				Total: storage,
 			},
 		},

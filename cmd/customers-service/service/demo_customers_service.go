@@ -16,6 +16,10 @@ limitations under the License.
 
 package service
 
+import (
+	"github.com/container-mgmt/dedicated-portal/pkg/api"
+)
+
 // DemoCustomersService is a struct implementing the customer service interface.
 type DemoCustomersService struct {
 }
@@ -32,13 +36,13 @@ func (s *DemoCustomersService) Close() error {
 }
 
 // Add adds a single customer to psql database.
-func (s *DemoCustomersService) Add(customer Customer) (*Customer, error) {
-	return &Customer{}, nil
+func (s *DemoCustomersService) Add(customer api.Customer) (*api.Customer, error) {
+	return &api.Customer{}, nil
 }
 
 // Get retrieves a single customer from psql database.
-func (s *DemoCustomersService) Get(id string) (*Customer, error) {
-	return &Customer{
+func (s *DemoCustomersService) Get(id string) (*api.Customer, error) {
+	return &api.Customer{
 		ID:            "UNIQEID",
 		Name:          "Ari",
 		OwnedClusters: []string{"Eeast_cluster", "West_cluster"},
@@ -46,11 +50,11 @@ func (s *DemoCustomersService) Get(id string) (*Customer, error) {
 }
 
 // List retrieves a list of current customers stored in datastore.
-func (s *DemoCustomersService) List(args *ListArguments) (*CustomersList, error) {
-	var result *CustomersList
+func (s *DemoCustomersService) List(args *ListArguments) (*api.CustomerList, error) {
+	var result *api.CustomerList
 
-	result = &CustomersList{
-		Items: []*Customer{
+	result = &api.CustomerList{
+		Items: []*api.Customer{
 			{
 				ID:            "UNIQEID_1",
 				Name:          "Ari",
