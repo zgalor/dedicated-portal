@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -31,14 +30,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/urfave/negroni"
 
-	"github.com/container-mgmt/dedicated-portal/cmd/customers-service/jwtcert"
 	"github.com/container-mgmt/dedicated-portal/cmd/customers-service/service"
+	"github.com/container-mgmt/dedicated-portal/pkg/auth"
 )
-
-// Server serves REST API requests on clusters.
-type Server struct {
-	service service.CustomersService
-}
 
 var serveArgs struct {
 	host              string
@@ -96,13 +90,6 @@ func init() {
 	)
 }
 
-// InitServer is a constructor for the Server struct.
-func initServer(s service.CustomersService) (server *Server) {
-	server = new(Server)
-	server.service = s
-	return server
-}
-
 func runServe(cmd *cobra.Command, args []string) {
 	var err error
 	var s service.CustomersService
@@ -126,7 +113,7 @@ func runServe(cmd *cobra.Command, args []string) {
 	serverAddress := fmt.Sprintf("%s:%d", serveArgs.host, serveArgs.port)
 
 	// Start server.
-	server := initServer(s)
+	server := NewServer(s)
 	defer server.Close()
 
 	// Create the main router:
@@ -153,7 +140,7 @@ func runServe(cmd *cobra.Command, args []string) {
 		}
 
 		// Try to read the JWT public key object file.
-		jwtCert, err := jwtcert.DownloadAsPEM(serveArgs.jwkCertURL)
+		jwtCert, err := auth.DownloadAsPEM(serveArgs.jwkCertURL)
 		check(
 			err,
 			fmt.Sprintf(
@@ -168,7 +155,7 @@ func runServe(cmd *cobra.Command, args []string) {
 				result, _ := jwt.ParseRSAPublicKeyFromPEM([]byte(jwtCert))
 				return result, nil
 			},
-			ErrorHandler:  onAuthError,
+			ErrorHandler:  auth.OnAuthError,
 			SigningMethod: jwt.SigningMethodRS256,
 		})
 
@@ -191,23 +178,6 @@ func runServe(cmd *cobra.Command, args []string) {
 
 	// ListenAndServe
 	log.Fatal(http.ListenAndServe(serverAddress, loggedRouter))
-}
-
-// Close server
-func (server *Server) Close() error {
-	return server.service.Close()
-}
-
-// onAuthError returns an error json struct
-func onAuthError(w http.ResponseWriter, r *http.Request, err string) {
-	msg, _ := json.Marshal(map[string]string{"error": fmt.Sprint(err)})
-	if msg == nil {
-		msg = []byte("{\"error\":\"Unknown error while converting an error to json\"}")
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusUnauthorized)
-	responseWriterWriteWithLog(w, msg)
 }
 
 // Exit on error

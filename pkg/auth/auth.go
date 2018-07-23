@@ -14,7 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package jwtcert
+// Package auth to handle authentication
+package auth
 
 import (
 	"bytes"
@@ -27,6 +28,9 @@ import (
 	"io/ioutil"
 	"math/big"
 	"net/http"
+
+	"github.com/dgrijalva/jwt-go"
+	"github.com/golang/glog"
 )
 
 // jwtCert on jwt key
@@ -42,6 +46,63 @@ type jwtCert struct {
 // jwtKeys a list of JwtCerts
 type jwtKeys struct {
 	Keys []jwtCert `json:"keys"`
+}
+
+// CheckToken checks token validity and
+// returns the user subject
+func CheckToken(w http.ResponseWriter, r *http.Request) (sub string, err error) {
+	var claims jwt.MapClaims
+	var ok bool
+
+	// Get user from request
+	user := r.Context().Value("user")
+	if user == nil {
+		err = fmt.Errorf("can't parse token")
+		OnAuthError(w, r, err.Error())
+		return
+	}
+
+	// Get token
+	userToken := user.(*jwt.Token)
+
+	// Check validity
+	if !userToken.Valid {
+		err = fmt.Errorf("token invalid")
+		OnAuthError(w, r, err.Error())
+		return
+	}
+
+	// Get token claims
+	if claims, ok = userToken.Claims.(jwt.MapClaims); ok == false {
+		err = fmt.Errorf("can't parse token claims")
+		OnAuthError(w, r, err.Error())
+		return
+	}
+
+	// TODO:
+	// check aud, access ...
+
+	// Get the token subject (keycloack's uniqe ID of our user)
+	sub, ok = claims["sub"].(string)
+
+	return
+}
+
+// OnAuthError returns an error json struct
+func OnAuthError(w http.ResponseWriter, r *http.Request, err string) {
+	msg, _ := json.Marshal(map[string]string{"error": fmt.Sprint(err)})
+	if msg == nil {
+		msg = []byte("{\"error\":\"Unknown error while converting an error to json\"}")
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnauthorized)
+
+	// Send response body
+	_, e := w.Write(msg)
+	if e != nil {
+		glog.Errorf("Write to client: %s", e)
+	}
 }
 
 // DownloadAsPEM loads jwk struct from a Keycloack server

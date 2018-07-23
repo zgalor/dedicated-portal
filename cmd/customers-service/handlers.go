@@ -26,18 +26,27 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/container-mgmt/dedicated-portal/cmd/customers-service/service"
+	"github.com/container-mgmt/dedicated-portal/pkg/auth"
 )
 
 // Default number of items per page
 const defaultLimit = 100
 
-func getQueryParamInt(key string, defaultValue int64, r *http.Request) (value int64, err error) {
-	valStr := r.URL.Query().Get(key)
-	if valStr == "" {
-		return defaultValue, nil
-	}
-	value, err = strconv.ParseInt(valStr, 10, 64)
-	return
+// Server serves REST API requests on clusters.
+type Server struct {
+	service service.CustomersService
+}
+
+// NewServer is a constructor for the Server struct.
+func NewServer(s service.CustomersService) (server *Server) {
+	server = new(Server)
+	server.service = s
+	return server
+}
+
+// Close server
+func (server *Server) Close() error {
+	return server.service.Close()
 }
 
 func (server *Server) getCustomersList(w http.ResponseWriter, r *http.Request) {
@@ -45,6 +54,13 @@ func (server *Server) getCustomersList(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var page int64
 	var size int64
+
+	// Check token authorization
+	if _, err = auth.CheckToken(w, r); err != nil {
+		return
+	}
+	// Check if sub maps to admin user
+	// TODO: do not serve customer list for none-admin users
 
 	// Get Query Parameters.
 	page, err = getQueryParamInt("page", 0, r)
@@ -76,6 +92,14 @@ func (server *Server) getCustomersList(w http.ResponseWriter, r *http.Request) {
 func (server *Server) addCustomer(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var customer service.Customer
+
+	// Check token authorization
+	if _, err := auth.CheckToken(w, r); err != nil {
+		return
+	}
+	// Check if sub maps to admin user
+	// TODO: do not serve customer list for none-admin users
+
 	err := decoder.Decode(&customer)
 	if err != nil {
 		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error decoding customer, %v", err)})
@@ -90,13 +114,38 @@ func (server *Server) addCustomer(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) getCustomerByID(w http.ResponseWriter, r *http.Request) {
+	var sub string
+	var ret *service.Customer
+	var err error
+
 	id := mux.Vars(r)["id"]
-	ret, err := server.service.Get(id)
+
+	// Check token authorization
+	if sub, err = auth.CheckToken(w, r); err != nil {
+		return
+	}
+
+	// Check if sub maps to user
+	if sub != id {
+		auth.OnAuthError(w, r, "user id does not match token")
+		return
+	}
+
+	ret, err = server.service.Get(id)
 	if err != nil {
 		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error getting customer, %v", err)})
 	} else {
 		writeJSONResponse(w, http.StatusOK, ret)
 	}
+}
+
+func getQueryParamInt(key string, defaultValue int64, r *http.Request) (value int64, err error) {
+	valStr := r.URL.Query().Get(key)
+	if valStr == "" {
+		return defaultValue, nil
+	}
+	value, err = strconv.ParseInt(valStr, 10, 64)
+	return
 }
 
 func writeJSONResponse(w http.ResponseWriter, code int, payload interface{}) {
@@ -113,11 +162,9 @@ func writeJSONResponse(w http.ResponseWriter, code int, payload interface{}) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	responseWriterWriteWithLog(w, response)
-}
 
-func responseWriterWriteWithLog(w http.ResponseWriter, msg []byte) {
-	_, err := w.Write(msg)
+	// Send response body
+	_, err = w.Write(response)
 	if err != nil {
 		glog.Errorf("Write to client: %s", err)
 	}
