@@ -1,5 +1,5 @@
 = Clusters Service
-This service provides a restful API to create and get _OpenShift_ clusters 
+This service provides a restful API to create and get _OpenShift_ clusters
 
 == Get Clusters List
 
@@ -14,7 +14,7 @@ $ curl  http://clusters-service.127.0.0.1.nip.io/api/clusters_mgmt/v1/clusters
 }
 ----
 
-== Create a Cluster 
+== Create a Cluster
 create a file my_new_cluster.json
 [source]
 ----
@@ -25,7 +25,7 @@ create a file my_new_cluster.json
         "infra": 2,
         "compute": 4
     },
-    "memory": { 
+    "memory": {
         "total": 400
     },
     "cpu": {
@@ -34,9 +34,9 @@ create a file my_new_cluster.json
     "storage": {
         "total": 72
     }
-}  
+}
 $ curl -X POST -H "Content-Type: application/json" \
-  --data @my_new_cluster.json \ http://clusters-service.127.0.0.1.nip.io/api/clusters_mgmt/v1/clusters 
+  --data @my_new_cluster.json \ http://clusters-service.127.0.0.1.nip.io/api/clusters_mgmt/v1/clusters
 {
   "id": "17YtAO99Xxd7AS25rPatEGrdX7d",
   "name": "myCluster",
@@ -83,6 +83,21 @@ curl  http://clusters-service.127.0.0.1.nip.io/api/clusters_mgmt/v1/clusters/17Y
 }
 ----
 
-
-
-
+== How to use cluster-operator along side cluster-service
+Currently, there is no deployment for cluster-operator alongside cluster-service.
+To deploy cluster-operator follow the one-time setup instructions under https://github.com/openshift/cluster-operator:
+[source]
+----
+# deploy dedicated-portal.
+./hack/cluster-restart.sh
+# login as admin
+oc login -u system:admin
+# give permissions for dedicated portal to create k8s resources.
+oc adm policy add-cluster-role-to-user cluster-admin system:serviceaccount:dedicated-portal:default
+# create a user with admin permissions and switch to it.
+oc adm policy add-cluster-role-to-user cluster-admin admin
+# login to admin user
+oc login -u admin -p password
+# deploy cluster-operator from ansible (fake deployment. for real deployment add `-e fake_deployment=false` flag)
+ansible-playbook contrib/ansible/deploy-devel-playbook.yml
+----

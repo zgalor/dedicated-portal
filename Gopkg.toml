@@ -42,3 +42,26 @@
 [[constraint]]
   name = "github.com/dgrijalva/jwt-go"
   version = "v3.2.0"
+
+[[constraint]]
+  name = "github.com/openshift/cluster-operator"
+  branch = "master"
+
+[[constraint]]
+  name = "k8s.io/client-go"
+  version = "kubernetes-1.9.0"
+
+[[override]]
+  name = "k8s.io/api"
+  version = "kubernetes-1.9.0"
+[[override]]
+  name = "k8s.io/apiserver"
+  version = "kubernetes-1.9.0"
+
+[[override]]
+  name = "k8s.io/apimachinery"
+  version = "kubernetes-1.9.0"
+
+[[override]]
+  name = "k8s.io/kubernetes"
+  version = "kubernetes-1.9.0"
