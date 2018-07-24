@@ -26,8 +26,7 @@ binaries: vendor
 		cd -; \
 	done
 
-.PHONY: vendor
-vendor:
+vendor: Gopkg.lock
 	dep ensure -vendor-only -v
 
 .PHONY: images
