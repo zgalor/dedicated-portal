@@ -123,7 +123,7 @@ func (provisioner *ClusterOperatorProvisioner) clusterDeploymentFromSpec(spec ap
 				SSLSecret: corev1.LocalObjectReference{
 					Name: fmt.Sprintf("%s-certs", clusterName),
 				},
-				Region:      "us-east-1",
+				Region:      spec.Region,
 				KeyPairName: "libra",
 			},
 		},
@@ -193,7 +193,7 @@ func (provisioner *ClusterOperatorProvisioner) createClusterVersionIfNotExist(sp
 				AWSImages: &v1alpha1.AWSVMImages{
 					RegionAMIs: []v1alpha1.AWSRegionAMIs{
 						{
-							Region: "us-east-1",
+							Region: spec.Region,
 							AMI:    "ami-0dd8ad483cef75c18",
 						},
 					},
