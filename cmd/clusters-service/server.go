@@ -82,7 +82,7 @@ func (s Server) start() error {
 	apiRouter := mainRouter.PathPrefix("/api/clusters_mgmt/v1").Subrouter()
 	apiRouter.HandleFunc("/clusters", s.listClusters).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/clusters", s.createCluster).Methods(http.MethodPost)
-	apiRouter.HandleFunc("/clusters/{uuid}", s.getCluster).Methods(http.MethodGet)
+	apiRouter.HandleFunc("/clusters/{id}", s.getCluster).Methods(http.MethodGet)
 
 	// Enable the access log:
 	loggedRouter := handlers.LoggingHandler(os.Stdout, mainRouter)
