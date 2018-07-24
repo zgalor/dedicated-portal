@@ -1,3 +1,21 @@
+/*
+Copyright (c) 2018 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+//go:generate go-bindata -o ./data/migrations/bindata.go -pkg migrations ./data/migrations
+
 package main
 
 import (
@@ -14,6 +32,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 
+	"github.com/container-mgmt/dedicated-portal/cmd/clusters-service/data/migrations"
 	"github.com/container-mgmt/dedicated-portal/pkg/auth"
 	"github.com/container-mgmt/dedicated-portal/pkg/signals"
 	"github.com/container-mgmt/dedicated-portal/pkg/sql"
@@ -149,20 +168,18 @@ func runServe(cmd *cobra.Command, args []string) {
 		glog.Fatalf("An error occurred while trying to retrieve kubernetes configurations: %s", err)
 	}
 
-	err = sql.EnsureSchema(
-		"/usr/local/share/clusters-service/migrations",
-		serveArgs.dbURL,
-	)
+	err = sql.EnsureSchema(serveArgs.dbURL, migrations.AssetNames, migrations.Asset)
 	if err != nil {
-		glog.Errorf("can't run sql migration: %s", err)
-		os.Exit(1)
+		check(err, "Can't migrate sql schema")
 	}
 
+	// Create a connection object to the ClusterOperator.
 	provisioner, err := NewClusterOperatorProvisioner(k8sConfig)
 	if err != nil {
 		panic(fmt.Sprintf("Error starting clusters service: %v", err))
 	}
 
+	// Connect to the SQL service.
 	service := NewClustersService(serveArgs.dbURL, provisioner)
 	fmt.Println("Created cluster service.")
 

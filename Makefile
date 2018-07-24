@@ -22,6 +22,7 @@ version:=latest
 binaries: vendor
 	for cmd in $$(ls cmd); do \
 		cd cmd/$${cmd}; \
+		go generate || exit 1; \
 		go install || exit 1; \
 		cd -; \
 	done

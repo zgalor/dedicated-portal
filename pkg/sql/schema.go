@@ -6,20 +6,35 @@ import (
 	"time"
 
 	"github.com/golang-migrate/migrate"
+	"github.com/golang-migrate/migrate/source/go_bindata"
+
 	// Register the migrate postgresl driver
 	_ "github.com/golang-migrate/migrate/database/postgres"
-	_ "github.com/golang-migrate/migrate/source/file"
 	_ "github.com/lib/pq"
 )
 
 // EnsureSchema makes sure our DB's schema matches that defined by schemaPath.
 // It migrates it if needed and returns error if it can't do so.
-func EnsureSchema(schemaPath, connectionURL string) error {
+func EnsureSchema(connectionURL string,
+	AssetNames func() []string,
+	Asset func(string) ([]byte, error)) error {
+
+	// Connect to DB
 	waitForDatabase(connectionURL)
-	m, err := migrate.New(
-		fmt.Sprintf("file:///%s", schemaPath),
-		connectionURL,
-	)
+
+	// We use migration files minified into a binary blob:
+	//
+	// This bindata resource include migration scripts.
+	r := bindata.Resource(AssetNames(),
+		func(name string) ([]byte, error) {
+			return Asset(name)
+		})
+	d, err := bindata.WithInstance(r)
+	if err != nil {
+		return fmt.Errorf("bindata.New: %v", err)
+	}
+
+	m, err := migrate.NewWithSourceInstance("go-bindata", d, connectionURL)
 	if err != nil {
 		return fmt.Errorf("migrate.New: %v", err)
 	}
@@ -29,14 +44,17 @@ func EnsureSchema(schemaPath, connectionURL string) error {
 	if err != nil {
 		return fmt.Errorf("outputVersion: %v", err)
 	}
+
 	runMigration(m)
 	if err != nil {
 		return fmt.Errorf("migrate: %v", err)
 	}
+
 	outputVersion(m)
 	if err != nil {
 		return fmt.Errorf("outputVersion: %v", err)
 	}
+
 	return nil
 }
 

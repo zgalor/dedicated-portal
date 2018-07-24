@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//go:generate go-bindata -o ./data/migrations/bindata.go -pkg migrations ./data/migrations
+
 package main
 
 import (
@@ -27,6 +29,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
+	"github.com/container-mgmt/dedicated-portal/cmd/customers-service/data/migrations"
 	"github.com/container-mgmt/dedicated-portal/cmd/customers-service/service"
 	"github.com/container-mgmt/dedicated-portal/pkg/auth"
 	"github.com/container-mgmt/dedicated-portal/pkg/sql"
@@ -97,13 +100,12 @@ func runServe(cmd *cobra.Command, args []string) {
 			check(fmt.Errorf("flag missing: --db-url"), "No db URL defined")
 		}
 
-		err := sql.EnsureSchema(
-			"/usr/local/share/customers-service/migrations",
-			serveArgs.dbURL,
-		)
+		err := sql.EnsureSchema(serveArgs.dbURL, migrations.AssetNames, migrations.Asset)
 		if err != nil {
 			check(err, "Can't migrate sql schema")
 		}
+
+		// Connect to the SQL service.
 		s, err = service.NewSQLCustomersService(serveArgs.dbURL)
 	} else {
 		// Connect to the Demo service.
