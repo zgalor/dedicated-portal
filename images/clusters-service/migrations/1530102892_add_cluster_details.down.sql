@@ -1,5 +1,6 @@
 ALTER TABLE clusters
 DROP COLUMN name,
+DROP COLUMN region,
 DROP COLUMN master_nodes,
 DROP COLUMN infra_nodes, 
 DROP COLUMN compute_nodes, 

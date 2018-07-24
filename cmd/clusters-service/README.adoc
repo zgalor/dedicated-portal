@@ -20,6 +20,7 @@ create a file my_new_cluster.json
 ----
 {
     "name": "myCluster",
+    "region": "us-east-1",
     "nodes": {
         "master": 1,
         "infra": 2,
@@ -40,6 +41,7 @@ $ curl -X POST -H "Content-Type: application/json" \
 {
   "id": "17YtAO99Xxd7AS25rPatEGrdX7d",
   "name": "myCluster",
+  "region": "us-east-1",
   "nodes": {
     "total": 7,
     "master": 1,
@@ -65,6 +67,7 @@ curl  http://clusters-service.127.0.0.1.nip.io/api/clusters_mgmt/v1/clusters/17Y
 {
   "id": "17YtAO99Xxd7AS25rPatEGrdX7d",
   "name": "myCluster",
+  "region": "us-east-1",
   "nodes": {
     "total": 7,
     "master": 1,
@@ -99,5 +102,5 @@ oc adm policy add-cluster-role-to-user cluster-admin admin
 # login to admin user
 oc login -u admin -p password
 # deploy cluster-operator from ansible (fake deployment. for real deployment add `-e fake_deployment=false` flag)
-ansible-playbook contrib/ansible/deploy-devel-playbook.yml
+ansible-playbook ../../openshift/cluster-operator/contrib/ansible/deploy-devel-playbook.yml
 ----

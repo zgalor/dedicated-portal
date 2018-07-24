@@ -115,12 +115,13 @@ func (cs GenericClustersService) Create(spec api.Cluster) (result api.Cluster, e
 	stmt, err := db.Prepare(`
 		INSERT INTO clusters (
 			id,
-			name, 
-			master_nodes, 
-			infra_nodes, 
-			compute_nodes, 
-			memory, 
-			cpu_cores, 
+			name,
+			region,
+			master_nodes,
+			infra_nodes,
+			compute_nodes,
+			memory,
+			cpu_cores,
 			storage
 		) VALUES (
 			$1,
@@ -130,7 +131,8 @@ func (cs GenericClustersService) Create(spec api.Cluster) (result api.Cluster, e
 			$5,
 			$6,
 			$7,
-			$8)
+			$8,
+			$9)
 	`)
 	if err != nil {
 		return api.Cluster{}, err
@@ -139,6 +141,7 @@ func (cs GenericClustersService) Create(spec api.Cluster) (result api.Cluster, e
 	queryResult, err := stmt.Exec(
 		id,
 		spec.Name,
+		spec.Region,
 		spec.Nodes.Master,
 		spec.Nodes.Infra,
 		spec.Nodes.Compute,
@@ -160,8 +163,9 @@ func (cs GenericClustersService) Create(spec api.Cluster) (result api.Cluster, e
 
 	totalNodes := spec.Nodes.Master + spec.Nodes.Infra + spec.Nodes.Compute
 	return api.Cluster{
-		Name: spec.Name,
-		ID:   fmt.Sprintf("%s", id),
+		Name:   spec.Name,
+		ID:     fmt.Sprintf("%s", id),
+		Region: spec.Region,
 		Nodes: api.ClusterNodes{
 			Total:   totalNodes,
 			Master:  spec.Nodes.Master,
@@ -190,6 +194,7 @@ func (cs GenericClustersService) Get(id string) (result api.Cluster, err error) 
 	defer db.Close()
 	var (
 		name         string
+		region       string
 		masterNodes  int
 		infraNodes   int
 		computeNodes int
@@ -198,15 +203,37 @@ func (cs GenericClustersService) Get(id string) (result api.Cluster, err error) 
 		storage      int
 	)
 
-	err = db.QueryRow("SELECT id, name, master_nodes, infra_nodes, compute_nodes, memory, cpu_cores, storage FROM clusters	WHERE id = $1", id).Scan(
-		&id, &name, &masterNodes, &infraNodes, &computeNodes, &memory, &cpuCores, &storage)
+	err = db.QueryRow(`
+	SELECT 
+		id, 
+		name, 
+		region, 
+		master_nodes, 
+		infra_nodes, 
+		compute_nodes, 
+		memory, 
+		cpu_cores, 
+		storage 
+	FROM clusters	
+	WHERE id = $1`, id).Scan(
+		&id,
+		&name,
+		&region,
+		&masterNodes,
+		&infraNodes,
+		&computeNodes,
+		&memory,
+		&cpuCores,
+		&storage)
+
 	if err != nil {
 		return api.Cluster{}, err
 	}
 	totalNodes := masterNodes + infraNodes + computeNodes
 	return api.Cluster{
-			Name: name,
-			ID:   id,
+			Name:   name,
+			Region: region,
+			ID:     id,
 			Nodes: api.ClusterNodes{
 				Total:   totalNodes,
 				Master:  masterNodes,

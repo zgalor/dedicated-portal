@@ -22,6 +22,7 @@ package api
 type Cluster struct {
 	ID      string          `json:"id,omitempty"`
 	Name    string          `json:"name,omitempty"`
+	Region  string          `json:"region,omitempty"`
 	Nodes   ClusterNodes    `json:"nodes,omitempty"`
 	Memory  ClusterResource `json:"memory,omitempty"`
 	CPU     ClusterResource `json:"cpu,omitempty"`
