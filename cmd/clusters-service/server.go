@@ -47,6 +47,23 @@ func init() {
 		"",
 		"The database connection url.",
 	)
+	flags.StringVar(
+		&clusterOperatorKubeConfig,
+		"cluster-operator-kubeconfig",
+		"",
+		"Path to a Kubernetes client configuration file used to connect "+
+			"to the cluster where the cluster operator is running. Only required when running "+
+			"cluster-operator outside of the cluster where the clusters-service is running. .",
+	)
+	flags.StringVar(
+		&clusterOperatorKubeAddress,
+		"cluster-operator-master",
+		"",
+		"The address of the Kubernetes API server for the cluster where cluster operator is running."+
+			"Overrides any value in the Kubernetes "+
+			"configuration file. Only required when running cluster-operator outside of the cluster "+
+			"where the clusters-service is running.",
+	)
 }
 
 // NewServer creates a new server.
@@ -73,27 +90,6 @@ func (s Server) start() error {
 	fmt.Println("Listening.")
 	go http.ListenAndServe(":8000", loggedRouter)
 	return nil
-}
-
-func init() {
-	serveFlags := serveCmd.Flags()
-	serveFlags.StringVar(
-		&clusterOperatorKubeConfig,
-		"cluster-operator-kubeconfig",
-		"",
-		"Path to a Kubernetes client configuration file used to connect "+
-			"to the cluster where the cluster operator is running. Only required when running "+
-			"cluster-operator outside of the cluster where the clusters-service is running. .",
-	)
-	serveFlags.StringVar(
-		&clusterOperatorKubeAddress,
-		"cluster-operator-master",
-		"",
-		"The address of the Kubernetes API server for the cluster where cluster operator is running."+
-			"Overrides any value in the Kubernetes "+
-			"configuration file. Only required when running cluster-operator outside of the cluster "+
-			"where the clusters-service is running.",
-	)
 }
 
 func runServe(cmd *cobra.Command, args []string) {
