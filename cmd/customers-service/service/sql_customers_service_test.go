@@ -20,21 +20,23 @@ import (
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/container-mgmt/dedicated-portal/pkg/api"
 )
 
 var service *SQLCustomersService
 var localTesting = true
 
 func TestMain(m *testing.M) {
-	var err error
 	if !localTesting {
 		os.Exit(0)
 	}
 	connStr := "host=localhost port=5432 user=postgres password=1234 dbname=customers sslmode=disable"
-	service, err = NewSQLCustomersService(connStr)
+	genericService, err := NewSQLCustomersService(connStr)
 	if err != nil {
 		fmt.Printf("An error occurred while trying to connect to database: %s\n", err)
 	}
+	service = genericService.(*SQLCustomersService)
 	defer deleteAll()
 	defer service.Close()
 	os.Exit(m.Run())
@@ -43,7 +45,7 @@ func TestMain(m *testing.M) {
 func TestAdd(t *testing.T) {
 	deleteAll()
 
-	customerToAdd := Customer{
+	customerToAdd := api.Customer{
 		Name: "test_customer",
 	}
 	res, err := service.Add(customerToAdd)
@@ -63,9 +65,9 @@ func TestGet(t *testing.T) {
 	deleteAll()
 
 	var err error
-	var customer *Customer
+	var customer *api.Customer
 
-	expected := Customer{
+	expected := api.Customer{
 		ID:            "customer-fake-id",
 		Name:          "test_customer",
 		OwnedClusters: []string{"fake-cluster-id0", "fake-cluster-id1"},
@@ -112,7 +114,7 @@ func TestGet(t *testing.T) {
 func TestList(t *testing.T) {
 	deleteAll()
 
-	items := []*Customer{
+	items := []*api.Customer{
 		{
 			ID:            "test-id0",
 			Name:          "test-name0",
@@ -124,7 +126,7 @@ func TestList(t *testing.T) {
 			OwnedClusters: []string{"test-cluster-id2"},
 		},
 	}
-	expected := CustomersList{
+	expected := api.CustomerList{
 		Page:  1,
 		Size:  2,
 		Total: 2,
