@@ -22,13 +22,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/auth0/go-jwt-middleware"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
-	"github.com/urfave/negroni"
 
 	"github.com/container-mgmt/dedicated-portal/cmd/customers-service/service"
 	"github.com/container-mgmt/dedicated-portal/pkg/auth"
@@ -81,7 +78,7 @@ func init() {
 		&serveArgs.demoMode,
 		"demo-mode",
 		false,
-		"Run in demo mode (node token needed, return demo data).",
+		"Run in demo mode (no token needed, return demo data).",
 	)
 	flags.StringVar(
 		&serveArgs.notificationTopic,
@@ -111,7 +108,7 @@ func runServe(cmd *cobra.Command, args []string) {
 			serveArgs.dbURL,
 		)
 		if err != nil {
-			panic(err)
+			check(err, "Can't migrate sql schema")
 		}
 		s, err = service.NewSQLCustomersService(serveArgs.dbURL)
 	} else {
@@ -145,36 +142,21 @@ func runServe(cmd *cobra.Command, args []string) {
 	//
 	// When running on demo mode we want to bypass the JWT check
 	// and serve mock data.
-	if serveArgs.demoMode == false {
+	if !serveArgs.demoMode {
 		// Check for JWK cert cli arg:
 		if serveArgs.jwkCertURL == "" {
 			check(fmt.Errorf("flag missing: --jwk-certs-url"), "No cert URL defined")
 		}
 
-		// Try to read the JWT public key object file.
-		jwtCert, err := auth.DownloadAsPEM(serveArgs.jwkCertURL)
+		// Enable the access authentication:
+		authRouter, err := auth.Router(serveArgs.jwkCertURL, mainRouter)
 		check(
 			err,
 			fmt.Sprintf(
-				"Can't download JWK certificate from URL '%s'",
+				"Can't create authentication route using URL '%s'",
 				serveArgs.jwkCertURL,
 			),
 		)
-
-		// Add the JWT Middleware
-		jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
-			ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
-				result, _ := jwt.ParseRSAPublicKeyFromPEM([]byte(jwtCert))
-				return result, nil
-			},
-			ErrorHandler:  auth.OnAuthError,
-			SigningMethod: jwt.SigningMethodRS256,
-		})
-
-		// Enable the access authentication:
-		authRouter := negroni.New(
-			negroni.HandlerFunc(jwtMiddleware.HandlerWithNext))
-		authRouter.UseHandler(mainRouter)
 
 		// Enable the access log:
 		loggedRouter = handlers.LoggingHandler(os.Stdout, authRouter)

@@ -6,8 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/container-mgmt/dedicated-portal/pkg/signals"
-	"github.com/container-mgmt/dedicated-portal/pkg/sql"
 	"github.com/golang/glog"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -15,10 +13,16 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
+
+	"github.com/container-mgmt/dedicated-portal/pkg/auth"
+	"github.com/container-mgmt/dedicated-portal/pkg/signals"
+	"github.com/container-mgmt/dedicated-portal/pkg/sql"
 )
 
 var serveArgs struct {
-	dbURL string
+	jwkCertURL string
+	dbURL      string
+	demoMode   bool
 }
 
 var serveCmd = &cobra.Command{
@@ -48,6 +52,18 @@ func init() {
 		"The database connection url.",
 	)
 	flags.StringVar(
+		&serveArgs.jwkCertURL,
+		"jwk-certs-url",
+		"",
+		"The url endpoint for the JWK certs.",
+	)
+	flags.BoolVar(
+		&serveArgs.demoMode,
+		"demo-mode",
+		false,
+		"Run in demo mode (no token needed).",
+	)
+	flags.StringVar(
 		&clusterOperatorKubeConfig,
 		"cluster-operator-kubeconfig",
 		"",
@@ -75,6 +91,8 @@ func NewServer(stopCh <-chan struct{}, clusterService ClustersService) *Server {
 }
 
 func (s Server) start() error {
+	var loggedRouter http.Handler
+
 	// Create the main router:
 	mainRouter := mux.NewRouter()
 
@@ -84,8 +102,32 @@ func (s Server) start() error {
 	apiRouter.HandleFunc("/clusters", s.createCluster).Methods(http.MethodPost)
 	apiRouter.HandleFunc("/clusters/{uuid}", s.getCluster).Methods(http.MethodGet)
 
-	// Enable the access log:
-	loggedRouter := handlers.LoggingHandler(os.Stdout, mainRouter)
+	// If not in demo mode, check JWK and add a JWT middleware:
+	//
+	// When running on demo mode we want to bypass the JWT check
+	// and serve mock data.
+	if !serveArgs.demoMode {
+		// Check for JWK cert cli arg:
+		if serveArgs.jwkCertURL == "" {
+			check(fmt.Errorf("flag missing: --jwk-certs-url"), "No cert URL defined")
+		}
+
+		// Enable the access authentication:
+		authRouter, err := auth.Router(serveArgs.jwkCertURL, mainRouter)
+		check(
+			err,
+			fmt.Sprintf(
+				"Can't create authentication route using URL '%s'",
+				serveArgs.jwkCertURL,
+			),
+		)
+
+		// Enable the access log:
+		loggedRouter = handlers.LoggingHandler(os.Stdout, authRouter)
+	} else {
+		// Enable the access log:
+		loggedRouter = handlers.LoggingHandler(os.Stdout, mainRouter)
+	}
 
 	fmt.Println("Listening.")
 	go http.ListenAndServe(":8000", loggedRouter)
@@ -103,7 +145,6 @@ func runServe(cmd *cobra.Command, args []string) {
 	}
 
 	k8sConfig, err := retrieveKubeConfig()
-
 	if err != nil {
 		glog.Fatalf("An error occurred while trying to retrieve kubernetes configurations: %s", err)
 	}
@@ -209,4 +250,12 @@ func kubeConfigPath(clusterOperatorKubeConfig string) (kubeConfig string, err er
 	}
 
 	return
+}
+
+// Exit on error
+func check(err error, msg string) {
+	if err != nil {
+		glog.Errorf("%s: %s", msg, err)
+		os.Exit(1)
+	}
 }
