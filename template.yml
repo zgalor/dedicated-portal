@@ -146,7 +146,7 @@ objects:
           imagePullPolicy: IfNotPresent
           env:
           - name: POSTGRESQL_DATABASE
-            value: clusters
+            value: customers
           - name: POSTGRESQL_USER
             value: service
           - name: POSTGRESQL_PASSWORD
