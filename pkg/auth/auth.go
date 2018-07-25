@@ -29,8 +29,11 @@ import (
 	"math/big"
 	"net/http"
 
+	"github.com/auth0/go-jwt-middleware"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"
+	"github.com/gorilla/mux"
+	"github.com/urfave/negroni"
 )
 
 // jwtCert on jwt key
@@ -184,4 +187,30 @@ func certToPEM(c jwtCert) (string, error) {
 	// Output pem as string
 	pem.Encode(&out, block)
 	return out.String(), nil
+}
+
+// Router adds
+func Router(certURL string, router *mux.Router) (*negroni.Negroni, error) {
+	// Try to read the JWT public key object file.
+	jwtCert, err := DownloadAsPEM(certURL)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add the JWT Middleware
+	jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
+		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
+			return jwt.ParseRSAPublicKeyFromPEM([]byte(jwtCert))
+		},
+		ErrorHandler:  OnAuthError,
+		SigningMethod: jwt.SigningMethodRS256,
+	})
+
+	// Enable the access authentication:
+	authRouter := negroni.New(
+		negroni.HandlerFunc(jwtMiddleware.HandlerWithNext))
+	authRouter.UseHandler(router)
+
+	// Return router, error
+	return authRouter, nil
 }

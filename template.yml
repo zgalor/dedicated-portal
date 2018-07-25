@@ -69,6 +69,7 @@ objects:
           args:
           - serve
           - --db-url=postgres://service:${PASSWORD}@localhost:5432/clusters?sslmode=disable
+          - --jwk-certs-url=https://developers.redhat.com/auth/realms/rhd/protocol/openid-connect/certs
           command:
           - /usr/local/bin/clusters-service
           ports:
