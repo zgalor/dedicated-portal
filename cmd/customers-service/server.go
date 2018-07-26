@@ -80,12 +80,6 @@ func init() {
 		false,
 		"Run in demo mode (no token needed, return demo data).",
 	)
-	flags.StringVar(
-		&serveArgs.notificationTopic,
-		"notifications-topic",
-		"customers.notifications",
-		"The name of the topic listening to notifications, for example: customers.notifications",
-	)
 }
 
 func runServe(cmd *cobra.Command, args []string) {
