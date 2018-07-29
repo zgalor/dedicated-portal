@@ -34,8 +34,11 @@ type SQLCustomersService struct {
 	db *sql.DB
 }
 
+// DefaultLimit is the default number of items per page.
+const DefaultLimit = 100
+
 // NewSQLCustomersService is a constructor for the SQLCustomersService struct.
-func NewSQLCustomersService(connStr string) (CustomersService, error) {
+func NewSQLCustomersService(connStr string) (*SQLCustomersService, error) {
 	db, err := sql.Open("postgres", connStr)
 
 	if err != nil {
@@ -155,7 +158,7 @@ func (s *SQLCustomersService) List(args *ListArguments) (*api.CustomerList, erro
 		numOfItems = args.Size
 	} else {
 		page = 0
-		numOfItems = 0
+		numOfItems = DefaultLimit
 	}
 
 	// Retrieve customers id's and names.

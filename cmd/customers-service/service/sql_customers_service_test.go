@@ -31,12 +31,12 @@ func TestMain(m *testing.M) {
 	if !localTesting {
 		os.Exit(0)
 	}
+	var err error
 	connStr := "host=localhost port=5432 user=postgres password=1234 dbname=customers sslmode=disable"
-	genericService, err := NewSQLCustomersService(connStr)
+	service, err = NewSQLCustomersService(connStr)
 	if err != nil {
 		fmt.Printf("An error occurred while trying to connect to database: %s\n", err)
 	}
-	service = genericService.(*SQLCustomersService)
 	defer deleteAll()
 	defer service.Close()
 	os.Exit(m.Run())

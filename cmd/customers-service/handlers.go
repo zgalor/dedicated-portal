@@ -30,9 +30,6 @@ import (
 	"github.com/container-mgmt/dedicated-portal/pkg/auth"
 )
 
-// Default number of items per page
-const defaultLimit = 100
-
 // Server serves REST API requests on clusters.
 type Server struct {
 	service service.CustomersService
@@ -70,7 +67,7 @@ func (server *Server) getCustomersList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	size, err = getQueryParamInt("size", defaultLimit, r)
+	size, err = getQueryParamInt("size", service.DefaultLimit, r)
 	if err != nil {
 		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error listing customers, %v", err)})
 		return
