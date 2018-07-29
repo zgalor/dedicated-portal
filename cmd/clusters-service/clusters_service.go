@@ -35,7 +35,7 @@ type ClustersService interface {
 
 // GenericClustersService is a ClusterService placeholder implementation.
 type GenericClustersService struct {
-	connectionUrl string
+	connectionURL string
 	provisioner   ClusterProvisioner
 }
 
@@ -46,9 +46,9 @@ type ListArguments struct {
 }
 
 // NewClustersService Creates a new ClustersService.
-func NewClustersService(connectionUrl string, provisioner ClusterProvisioner) ClustersService {
+func NewClustersService(connectionURL string, provisioner ClusterProvisioner) ClustersService {
 	service := new(GenericClustersService)
-	service.connectionUrl = connectionUrl
+	service.connectionURL = connectionURL
 	service.provisioner = provisioner
 	return service
 }
@@ -56,7 +56,7 @@ func NewClustersService(connectionUrl string, provisioner ClusterProvisioner) Cl
 // List returns lists of clusters.
 func (cs GenericClustersService) List(args ListArguments) (result api.ClusterList, err error) {
 	result.Items = make([]*api.Cluster, 0)
-	db, err := sql.Open("postgres", cs.connectionUrl)
+	db, err := sql.Open("postgres", cs.connectionURL)
 	if err != nil {
 		return api.ClusterList{}, fmt.Errorf("Error openning connection: %v", err)
 	}
@@ -107,7 +107,7 @@ func (cs GenericClustersService) Create(spec api.Cluster) (result api.Cluster, e
 			spec.Name, err)
 	}
 
-	db, err := sql.Open("postgres", cs.connectionUrl)
+	db, err := sql.Open("postgres", cs.connectionURL)
 	if err != nil {
 		return api.Cluster{}, err
 	}
@@ -187,7 +187,7 @@ func (cs GenericClustersService) Create(spec api.Cluster) (result api.Cluster, e
 
 // Get returns a single cluster by id
 func (cs GenericClustersService) Get(id string) (result api.Cluster, err error) {
-	db, err := sql.Open("postgres", cs.connectionUrl)
+	db, err := sql.Open("postgres", cs.connectionURL)
 	if err != nil {
 		return api.Cluster{}, err
 	}
@@ -204,17 +204,17 @@ func (cs GenericClustersService) Get(id string) (result api.Cluster, err error) 
 	)
 
 	err = db.QueryRow(`
-	SELECT 
-		id, 
-		name, 
-		region, 
-		master_nodes, 
-		infra_nodes, 
-		compute_nodes, 
-		memory, 
-		cpu_cores, 
-		storage 
-	FROM clusters	
+	SELECT
+		id,
+		name,
+		region,
+		master_nodes,
+		infra_nodes,
+		compute_nodes,
+		memory,
+		cpu_cores,
+		storage
+	FROM clusters
 	WHERE id = $1`, id).Scan(
 		&id,
 		&name,
