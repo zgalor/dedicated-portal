@@ -72,10 +72,11 @@ func waitForDatabase(connectionURL string) {
 
 func tryConnect(connectionURL string) error {
 	db, err := sql.Open("postgres", connectionURL)
-	defer db.Close()
 	if err != nil {
 		return fmt.Errorf(fmt.Sprintf("sql.Open: %v...", err))
 	}
+	defer db.Close()
+
 	err = db.Ping()
 	if err != nil {
 		return fmt.Errorf(fmt.Sprintf("db.Ping: %v...", err))

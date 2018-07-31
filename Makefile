@@ -60,7 +60,12 @@ tgzs: tars
 
 .PHONY: lint
 lint:
-	./hack/verify.sh pkg cmd
+	golangci-lint run --skip-dirs /data --no-config \
+		--issues-exit-code=1 --deadline=15m --disable-all \
+		--enable=deadcode  --enable=gocyclo --enable=varcheck --enable=structcheck \
+		--enable=maligned --enable=ineffassign --enable=interfacer \
+		--enable=misspell --enable=unconvert --enable=goconst --enable=gas \
+		--enable=megacheck --enable=lll --enable=gofmt --enable=golint
 
 .PHONY: fmt
 fmt:

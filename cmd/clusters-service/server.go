@@ -32,10 +32,12 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 
-	"github.com/container-mgmt/dedicated-portal/cmd/clusters-service/data/migrations"
 	"github.com/container-mgmt/dedicated-portal/pkg/auth"
 	"github.com/container-mgmt/dedicated-portal/pkg/signals"
 	"github.com/container-mgmt/dedicated-portal/pkg/sql"
+
+	//nolint
+	"github.com/container-mgmt/dedicated-portal/cmd/clusters-service/data/migrations"
 )
 
 var serveArgs struct {
@@ -242,7 +244,7 @@ func kubeConfigPath(clusterOperatorKubeConfig string) (kubeConfig string, err er
 	if clusterOperatorKubeConfig != "" {
 		kubeConfig = clusterOperatorKubeConfig
 	} else {
-		if kubeConfig, ok = os.LookupEnv("KUBECONFIG"); ok != true {
+		if kubeConfig, ok = os.LookupEnv("KUBECONFIG"); !ok {
 			kubeConfig = filepath.Join(homedir.HomeDir(), ".kube", "config")
 		}
 	}

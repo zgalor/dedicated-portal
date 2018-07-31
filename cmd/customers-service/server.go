@@ -29,19 +29,20 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
 
-	"github.com/container-mgmt/dedicated-portal/cmd/customers-service/data/migrations"
 	"github.com/container-mgmt/dedicated-portal/cmd/customers-service/service"
 	"github.com/container-mgmt/dedicated-portal/pkg/auth"
 	"github.com/container-mgmt/dedicated-portal/pkg/sql"
+
+	//nolint
+	"github.com/container-mgmt/dedicated-portal/cmd/customers-service/data/migrations"
 )
 
 var serveArgs struct {
-	host              string
-	port              int
-	jwkCertURL        string
-	dbURL             string
-	notificationTopic string
-	demoMode          bool
+	host       string
+	port       int
+	jwkCertURL string
+	dbURL      string
+	demoMode   bool
 }
 
 var serveCmd = &cobra.Command{
@@ -94,13 +95,13 @@ func runServe(cmd *cobra.Command, args []string) {
 	//
 	// If not in demo mode, try to connect to the sql server.
 	// If we are in demo mode, connect to a demo data source.
-	if serveArgs.demoMode == false {
+	if !serveArgs.demoMode {
 		// Check for db url cli arg:
 		if serveArgs.dbURL == "" {
 			check(fmt.Errorf("flag missing: --db-url"), "No db URL defined")
 		}
 
-		err := sql.EnsureSchema(serveArgs.dbURL, migrations.AssetNames, migrations.Asset)
+		err = sql.EnsureSchema(serveArgs.dbURL, migrations.AssetNames, migrations.Asset)
 		if err != nil {
 			check(err, "Can't migrate sql schema")
 		}

@@ -76,7 +76,7 @@ func CheckToken(w http.ResponseWriter, r *http.Request) (sub string, err error) 
 	}
 
 	// Get token claims
-	if claims, ok = userToken.Claims.(jwt.MapClaims); ok == false {
+	if claims, ok = userToken.Claims.(jwt.MapClaims); !ok {
 		err = fmt.Errorf("can't parse token claims")
 		OnAuthError(w, r, err.Error())
 		return
@@ -86,7 +86,7 @@ func CheckToken(w http.ResponseWriter, r *http.Request) (sub string, err error) 
 	// check aud, access ...
 
 	// Get the token subject (keycloack's uniqe ID of our user)
-	sub, ok = claims["sub"].(string)
+	sub, _ = claims["sub"].(string)
 
 	return
 }
