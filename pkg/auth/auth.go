@@ -108,45 +108,49 @@ func OnAuthError(w http.ResponseWriter, r *http.Request, err string) {
 	}
 }
 
-// DownloadAsPEM loads jwk struct from a Keycloack server
-// and returns a PEM string.
-func DownloadAsPEM(url string) (out string, err error) {
-	var certs jwtKeys
-
-	// Try to download the JWKs array.
-	certs, err = downloadCerts(url)
-	if err != nil {
-		return "", err
-	}
-
-	// Take the first key and convert it to string.
-	out, err = certToPEM(certs.Keys[0])
-	return
-}
-
-// downloadCerts download JWK certs from url
-func downloadCerts(url string) (jwtKeys, error) {
+// downloadPublicKeys download public keys from URL.
+func downloadPublicKeys(url string) (keyMap map[string]*rsa.PublicKey, err error) {
 	var body []byte
 	var certs jwtKeys
+	var res *http.Response
+	var pemStr string
+
+	// Init keyMap
+	keyMap = map[string]*rsa.PublicKey{}
 
 	// If no errors getting response from cert server:
-	res, err := http.Get(url)
+	res, err = http.Get(url)
 	if err != nil {
-		return jwtKeys{}, err
+		return
 	}
 
 	// Try to read the response body.
 	body, err = ioutil.ReadAll(res.Body)
 	if err != nil {
-		return jwtKeys{}, err
+		return
 	}
+
 	// Try to parse the response body.
 	err = json.Unmarshal(body, &certs)
 	if err != nil {
-		return jwtKeys{}, err
+		return
 	}
 
-	return certs, nil
+	// Convert cert list to map.
+	for _, c := range certs.Keys {
+		// Try to convert cert to string.
+		pemStr, err = certToPEM(c)
+		if err != nil {
+			return
+		}
+
+		keyMap[c.KID], err = jwt.ParseRSAPublicKeyFromPEM([]byte(pemStr))
+		if err != nil {
+			return
+		}
+	}
+
+	return
 }
 
 // certToPEM convert JWT object to PEM
@@ -189,10 +193,10 @@ func certToPEM(c jwtCert) (string, error) {
 	return out.String(), nil
 }
 
-// Router adds
+// Router creates an authentication router middleware.
 func Router(certURL string, router *mux.Router) (*negroni.Negroni, error) {
 	// Try to read the JWT public key object file.
-	jwtCert, err := DownloadAsPEM(certURL)
+	keyMap, err := downloadPublicKeys(certURL)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +204,19 @@ func Router(certURL string, router *mux.Router) (*negroni.Negroni, error) {
 	// Add the JWT Middleware
 	jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
 		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
-			return jwt.ParseRSAPublicKeyFromPEM([]byte(jwtCert))
+			// Try to get the token kid.
+			kid, ok := token.Header["kid"]
+			if !ok {
+				return nil, fmt.Errorf("auth.Router: no kid in token")
+			}
+
+			// Try to get currect cert from certs map.
+			key, ok := keyMap[kid.(string)]
+			if !ok {
+				return nil, fmt.Errorf("auth.Router: can't find key for key id [%v]", kid)
+			}
+
+			return key, nil
 		},
 		ErrorHandler:  OnAuthError,
 		SigningMethod: jwt.SigningMethodRS256,
