@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//go:generate go-bindata -o ./data/migrations/bindata.go -pkg migrations ./data/migrations
+//go:generate go-bindata -o ./data/migrations.go -pkg migrations -prefix data/migrations/ ./data/migrations
 
 package main
 
@@ -37,7 +37,7 @@ import (
 	"github.com/container-mgmt/dedicated-portal/pkg/sql"
 
 	//nolint
-	"github.com/container-mgmt/dedicated-portal/cmd/clusters-service/data/migrations"
+	"github.com/container-mgmt/dedicated-portal/cmd/clusters-service/data"
 )
 
 var serveArgs struct {
