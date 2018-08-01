@@ -20,21 +20,21 @@ package api
 
 // Cluster represents a cluster.
 type Cluster struct {
-	ID      string          `json:"id,omitempty"`
-	Name    string          `json:"name,omitempty"`
-	Region  string          `json:"region,omitempty"`
-	Nodes   ClusterNodes    `json:"nodes,omitempty"`
-	Memory  ClusterResource `json:"memory,omitempty"`
-	CPU     ClusterResource `json:"cpu,omitempty"`
-	Storage ClusterResource `json:"storage,omitempty"`
+	ID      string          `json:"id"`
+	Name    string          `json:"name"`
+	Region  string          `json:"region"`
+	Nodes   ClusterNodes    `json:"nodes"`
+	Memory  ClusterResource `json:"memory"`
+	CPU     ClusterResource `json:"cpu"`
+	Storage ClusterResource `json:"storage"`
 }
 
 // ClusterNodes represents the node count inside a cluster.
 type ClusterNodes struct {
-	Total   int `json:"total,omitempty"`
-	Master  int `json:"master,omitempty"`
-	Infra   int `json:"infra,omitempty"`
-	Compute int `json:"compute,omitempty"`
+	Total   int `json:"total"`
+	Master  int `json:"master"`
+	Infra   int `json:"infra"`
+	Compute int `json:"compute"`
 }
 
 // ClusterList is a list of clusters.
@@ -47,6 +47,6 @@ type ClusterList struct {
 
 // ClusterResource represents a resource availability in the cluster.
 type ClusterResource struct {
-	Used  int `json:"used,omitempty"`
-	Total int `json:"total,omitempty"`
+	Used  int `json:"used"`
+	Total int `json:"total"`
 }
