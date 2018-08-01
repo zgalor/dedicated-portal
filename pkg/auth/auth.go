@@ -108,45 +108,49 @@ func OnAuthError(w http.ResponseWriter, r *http.Request, err string) {
 	}
 }
 
-// downloadPublicKeys download public keys from url.
-func downloadPublicKeys(url string) (map[string]*rsa.PublicKey, error) {
+// downloadPublicKeys download public keys from URL.
+func downloadPublicKeys(url string) (keyMap map[string]*rsa.PublicKey, err error) {
 	var body []byte
 	var certs jwtKeys
-	keyMap := map[string]*rsa.PublicKey{}
+	var res *http.Response
+	var pemStr string
+
+	// Init keyMap
+	keyMap = map[string]*rsa.PublicKey{}
 
 	// If no errors getting response from cert server:
-	res, err := http.Get(url)
+	res, err = http.Get(url)
 	if err != nil {
-		return keyMap, err
+		return
 	}
 
 	// Try to read the response body.
 	body, err = ioutil.ReadAll(res.Body)
 	if err != nil {
-		return keyMap, err
+		return
 	}
 
 	// Try to parse the response body.
 	err = json.Unmarshal(body, &certs)
 	if err != nil {
-		return keyMap, err
+		return
 	}
 
 	// Convert cert list to map.
 	for _, c := range certs.Keys {
 		// Try to convert cert to string.
-		jwtPEM, err := certToPEM(c)
+		pemStr, err = certToPEM(c)
 		if err != nil {
-			return nil, err
+			return
 		}
 
-		keyMap[c.KID], err = jwt.ParseRSAPublicKeyFromPEM([]byte(jwtPEM))
+		keyMap[c.KID], err = jwt.ParseRSAPublicKeyFromPEM([]byte(pemStr))
 		if err != nil {
-			return nil, err
+			return
 		}
 	}
 
-	return keyMap, nil
+	return
 }
 
 // certToPEM convert JWT object to PEM
