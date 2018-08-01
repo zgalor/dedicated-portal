@@ -61,7 +61,16 @@ func (cs GenericClustersService) List(args ListArguments) (result api.ClusterLis
 		return api.ClusterList{}, fmt.Errorf("Error openning connection: %v", err)
 	}
 	defer db.Close()
-	rows, err := db.Query(`SELECT id, name
+	rows, err := db.Query(`SELECT 
+		id,
+		name,
+		region,
+		master_nodes,
+		infra_nodes,
+		compute_nodes,
+		memory,
+		cpu_cores,
+		storage
 		FROM clusters
 		ORDER BY id
 		LIMIT $1
@@ -74,14 +83,55 @@ func (cs GenericClustersService) List(args ListArguments) (result api.ClusterLis
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var id, name string
-		err = rows.Scan(&id, &name)
+		var (
+			id           string
+			name         string
+			region       string
+			masterNodes  int
+			infraNodes   int
+			computeNodes int
+			memory       int
+			cpuCores     int
+			storage      int
+		)
+
+		err = rows.Scan(
+			&id,
+			&name,
+			&region,
+			&masterNodes,
+			&infraNodes,
+			&computeNodes,
+			&memory,
+			&cpuCores,
+			&storage)
 		if err != nil {
 			return api.ClusterList{}, err
 		}
+
+		totalNodes := masterNodes + infraNodes + computeNodes
 		result.Items = append(result.Items, &api.Cluster{
-			Name: name,
-			ID:   id,
+			Name:   name,
+			Region: region,
+			ID:     id,
+			Nodes: api.ClusterNodes{
+				Total:   totalNodes,
+				Master:  masterNodes,
+				Infra:   infraNodes,
+				Compute: computeNodes,
+			},
+			Memory: api.ClusterResource{
+				Total: memory,
+				Used:  0,
+			},
+			CPU: api.ClusterResource{
+				Total: cpuCores,
+				Used:  0,
+			},
+			Storage: api.ClusterResource{
+				Total: storage,
+				Used:  0,
+			},
 		})
 	}
 	err = rows.Err() // get any error encountered during iteration
@@ -174,12 +224,15 @@ func (cs GenericClustersService) Create(spec api.Cluster) (result api.Cluster, e
 		},
 		Memory: api.ClusterResource{
 			Total: spec.Memory.Total,
+			Used:  0,
 		},
 		CPU: api.ClusterResource{
 			Total: spec.CPU.Total,
+			Used:  0,
 		},
 		Storage: api.ClusterResource{
 			Total: spec.Storage.Total,
+			Used:  0,
 		},
 	}, nil
 
@@ -242,12 +295,15 @@ func (cs GenericClustersService) Get(id string) (result api.Cluster, err error) 
 			},
 			Memory: api.ClusterResource{
 				Total: memory,
+				Used:  0,
 			},
 			CPU: api.ClusterResource{
 				Total: cpuCores,
+				Used:  0,
 			},
 			Storage: api.ClusterResource{
 				Total: storage,
+				Used:  0,
 			},
 		},
 		nil
