@@ -17,7 +17,6 @@
 FROM centos:7
 
 COPY customers-service /usr/local/bin/
-COPY migrations /usr/local/share/customers-service/migrations
 
 EXPOSE 8000
 

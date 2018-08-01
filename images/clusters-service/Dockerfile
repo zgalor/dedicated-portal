@@ -17,7 +17,6 @@
 FROM centos:7
 
 COPY clusters-service /usr/local/bin/
-COPY migrations /usr/local/share/clusters-service/migrations
 
 EXPOSE 8000
 

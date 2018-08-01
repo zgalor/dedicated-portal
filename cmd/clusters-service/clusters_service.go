@@ -164,7 +164,7 @@ func (cs GenericClustersService) Create(spec api.Cluster) (result api.Cluster, e
 	totalNodes := spec.Nodes.Master + spec.Nodes.Infra + spec.Nodes.Compute
 	return api.Cluster{
 		Name:   spec.Name,
-		ID:     fmt.Sprintf("%s", id),
+		ID:     id.String(),
 		Region: spec.Region,
 		Nodes: api.ClusterNodes{
 			Total:   totalNodes,

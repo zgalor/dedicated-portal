@@ -51,9 +51,7 @@ func (s *DemoCustomersService) Get(id string) (*api.Customer, error) {
 
 // List retrieves a list of current customers stored in datastore.
 func (s *DemoCustomersService) List(args *ListArguments) (*api.CustomerList, error) {
-	var result *api.CustomerList
-
-	result = &api.CustomerList{
+	result := &api.CustomerList{
 		Items: []*api.Customer{
 			{
 				ID:            "UNIQEID_1",
@@ -72,8 +70,4 @@ func (s *DemoCustomersService) List(args *ListArguments) (*api.CustomerList, err
 	}
 
 	return result, nil
-}
-
-func (s *DemoCustomersService) getCustomersCount() (int64, error) {
-	return 2, nil
 }

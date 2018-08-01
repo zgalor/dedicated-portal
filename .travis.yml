@@ -15,11 +15,9 @@ install:
 - echo 31144e465e52ffbc0035248a10ddea61a09bf28b00784fd3fdd9882c8cbb2315 dep-linux-amd64 | sha256sum -c
 - mv dep-linux-amd64 ~/bin/dep
 - chmod +x ~/bin/dep
-- go get golang.org/x/lint/golint
-- go get github.com/client9/misspell/cmd/misspell
-- go get golang.org/x/tools/cmd/goimports
+- go get github.com/jteeuwen/go-bindata/go-bindata
+- go get github.com/golangci/golangci-lint/cmd/golangci-lint
 
 script:
 - make images
 - make lint
-- misspell -error cmd/** pkg/** README.adoc

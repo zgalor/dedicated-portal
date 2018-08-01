@@ -32,6 +32,10 @@
   version = "3.3.0"
 
 [[constraint]]
+  name = "github.com/jteeuwen/go-bindata"
+  version = "3.0.7"
+
+[[constraint]]
   branch = "master"
   name = "github.com/auth0/go-jwt-middleware"
 

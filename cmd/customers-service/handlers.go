@@ -63,13 +63,19 @@ func (server *Server) getCustomersList(w http.ResponseWriter, r *http.Request) {
 	// Get Query Parameters.
 	page, err = getQueryParamInt("page", 0, r)
 	if err != nil {
-		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error listing customers, %v", err)})
+		writeJSONResponse(w, http.StatusBadRequest,
+			map[string]string{
+				"error": fmt.Sprintf("Error listing customers, %v", err),
+			})
 		return
 	}
 
 	size, err = getQueryParamInt("size", service.DefaultLimit, r)
 	if err != nil {
-		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error listing customers, %v", err)})
+		writeJSONResponse(w, http.StatusBadRequest,
+			map[string]string{
+				"error": fmt.Sprintf("Error listing customers, %v", err),
+			})
 		return
 	}
 
@@ -80,7 +86,10 @@ func (server *Server) getCustomersList(w http.ResponseWriter, r *http.Request) {
 
 	ret, err = server.service.List(args)
 	if err != nil {
-		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error listing customers, %v", err)})
+		writeJSONResponse(w, http.StatusBadRequest,
+			map[string]string{
+				"error": fmt.Sprintf("Error listing customers, %v", err),
+			})
 		return
 	}
 	writeJSONResponse(w, http.StatusOK, ret)
@@ -100,12 +109,18 @@ func (server *Server) addCustomer(w http.ResponseWriter, r *http.Request) {
 
 	err := decoder.Decode(&customer)
 	if err != nil {
-		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error decoding customer, %v", err)})
+		writeJSONResponse(w, http.StatusBadRequest,
+			map[string]string{
+				"error": fmt.Sprintf("Error decoding customer, %v", err),
+			})
 		return
 	}
 	ret, err := server.service.Add(customer)
 	if err != nil {
-		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error adding customer, %v", err)})
+		writeJSONResponse(w, http.StatusBadRequest,
+			map[string]string{
+				"error": fmt.Sprintf("Error adding customer, %v", err),
+			})
 	} else {
 		writeJSONResponse(w, http.StatusOK, ret)
 	}
@@ -131,7 +146,10 @@ func (server *Server) getCustomerByID(w http.ResponseWriter, r *http.Request) {
 
 	ret, err = server.service.Get(id)
 	if err != nil {
-		writeJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("Error getting customer, %v", err)})
+		writeJSONResponse(w, http.StatusBadRequest,
+			map[string]string{
+				"error": fmt.Sprintf("Error getting customer, %v", err),
+			})
 	} else {
 		writeJSONResponse(w, http.StatusOK, ret)
 	}
