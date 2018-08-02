@@ -150,11 +150,14 @@ func (cs GenericClustersService) Create(spec api.Cluster) (result api.Cluster, e
 		return api.Cluster{}, err
 	}
 
-	// Use cluster provisioner to Provision a cluster.
-	err = cs.provisioner.Provision(spec)
-	if err != nil {
-		return api.Cluster{}, fmt.Errorf("An error occurred while trying	to provision cluster %s: %s",
-			spec.Name, err)
+	// Don't actually provision the cluster when running in demo mode
+	if !serveArgs.demoMode {
+		// Use cluster provisioner to Provision a cluster.
+		err = cs.provisioner.Provision(spec)
+		if err != nil {
+			return api.Cluster{}, fmt.Errorf("An error occurred while trying	to provision cluster %s: %s",
+				spec.Name, err)
+		}
 	}
 
 	db, err := sql.Open("postgres", cs.connectionURL)
