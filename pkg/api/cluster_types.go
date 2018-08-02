@@ -18,6 +18,18 @@ limitations under the License.
 
 package api
 
+// ClusterState represents the state of a cluster
+type ClusterState string
+
+const (
+	// ClusterStateInstalling - the cluster is still installing
+	ClusterStateInstalling ClusterState = "Installing"
+	// ClusterStateReady - cluster is ready for use
+	ClusterStateReady ClusterState = "Ready"
+	// ClusterStateError - error during installation
+	ClusterStateError ClusterState = "Error"
+)
+
 // Cluster represents a cluster.
 type Cluster struct {
 	ID      string          `json:"id"`
@@ -27,6 +39,7 @@ type Cluster struct {
 	Memory  ClusterResource `json:"memory"`
 	CPU     ClusterResource `json:"cpu"`
 	Storage ClusterResource `json:"storage"`
+	State   ClusterState    `json:"state"`
 }
 
 // ClusterNodes represents the node count inside a cluster.
