@@ -29,7 +29,7 @@ import (
 // ClustersService performs operations on clusters.
 type ClustersService interface {
 	List(args ListArguments) (clusters api.ClusterList, err error)
-	Create(spec api.Cluster) (result api.Cluster, err error)
+	Create(spec api.Cluster, provision bool) (result api.Cluster, err error)
 	Get(id string) (result api.Cluster, err error)
 }
 
@@ -148,17 +148,19 @@ func (cs GenericClustersService) List(args ListArguments) (result api.ClusterLis
 }
 
 // Create saves a new cluster definition in the Database
-func (cs GenericClustersService) Create(spec api.Cluster) (result api.Cluster, err error) {
+func (cs GenericClustersService) Create(spec api.Cluster, provision bool) (result api.Cluster, err error) {
 	id, err := ksuid.NewRandom()
 	if err != nil {
 		return api.Cluster{}, err
 	}
 
-	// Use cluster provisioner to Provision a cluster.
-	err = cs.provisioner.Provision(spec)
-	if err != nil {
-		return api.Cluster{}, fmt.Errorf("An error occurred while trying	to provision cluster %s: %s",
-			spec.Name, err)
+	if provision {
+		// Use cluster provisioner to Provision a cluster.
+		err = cs.provisioner.Provision(spec)
+		if err != nil {
+			return api.Cluster{}, fmt.Errorf("An error occurred while trying to provision cluster %s: %s",
+				spec.Name, err)
+		}
 	}
 
 	db, err := sql.Open("postgres", cs.connectionURL)

@@ -61,6 +61,18 @@ $ curl -X POST -H "Content-Type: application/json" \
 }
 ----
 
+=== Create a cluster in the DB only
+When creating a new cluster the `provision` parameter can be provided (default=`true`).
+[source]
+----
+$ curl -X POST -H "Content-Type: application/json" \
+  --data @my_new_cluster.json \ http://clusters-service.127.0.0.1.nip.io/api/clusters_mgmt/v1/clusters?provision=false
+----
+
+
+This will not actually provision the cluster.
+This API can be used to sync with clusters provisioned by other services.
+
 == Get Cluster Details
 [source]
 ----
