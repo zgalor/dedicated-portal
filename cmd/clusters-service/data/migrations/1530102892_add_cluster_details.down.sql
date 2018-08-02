@@ -6,5 +6,7 @@ DROP COLUMN infra_nodes,
 DROP COLUMN compute_nodes, 
 DROP COLUMN memory, 
 DROP COLUMN cpu_cores,
-DROP COLUMN storage; 
+DROP COLUMN storage, 
+DROP COLUMN state;
+
 

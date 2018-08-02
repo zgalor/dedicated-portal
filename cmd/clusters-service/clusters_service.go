@@ -70,7 +70,8 @@ func (cs GenericClustersService) List(args ListArguments) (result api.ClusterLis
 		compute_nodes,
 		memory,
 		cpu_cores,
-		storage
+		storage,
+		state
 		FROM clusters
 		ORDER BY id
 		LIMIT $1
@@ -93,6 +94,7 @@ func (cs GenericClustersService) List(args ListArguments) (result api.ClusterLis
 			memory       int
 			cpuCores     int
 			storage      int
+			state        api.ClusterState
 		)
 
 		err = rows.Scan(
@@ -104,7 +106,8 @@ func (cs GenericClustersService) List(args ListArguments) (result api.ClusterLis
 			&computeNodes,
 			&memory,
 			&cpuCores,
-			&storage)
+			&storage,
+			&state)
 		if err != nil {
 			return api.ClusterList{}, err
 		}
@@ -132,6 +135,7 @@ func (cs GenericClustersService) List(args ListArguments) (result api.ClusterLis
 				Total: storage,
 				Used:  0,
 			},
+			State: state,
 		})
 	}
 	err = rows.Err() // get any error encountered during iteration
@@ -172,7 +176,8 @@ func (cs GenericClustersService) Create(spec api.Cluster) (result api.Cluster, e
 			compute_nodes,
 			memory,
 			cpu_cores,
-			storage
+			storage,
+			state
 		) VALUES (
 			$1,
 			$2,
@@ -182,7 +187,8 @@ func (cs GenericClustersService) Create(spec api.Cluster) (result api.Cluster, e
 			$6,
 			$7,
 			$8,
-			$9)
+			$9,
+			$10)
 	`)
 	if err != nil {
 		return api.Cluster{}, err
@@ -197,7 +203,8 @@ func (cs GenericClustersService) Create(spec api.Cluster) (result api.Cluster, e
 		spec.Nodes.Compute,
 		spec.Memory.Total,
 		spec.CPU.Total,
-		spec.Storage.Total)
+		spec.Storage.Total,
+		api.ClusterStateInstalling)
 	if err != nil {
 		return api.Cluster{}, err
 	}
@@ -234,6 +241,7 @@ func (cs GenericClustersService) Create(spec api.Cluster) (result api.Cluster, e
 			Total: spec.Storage.Total,
 			Used:  0,
 		},
+		State: api.ClusterStateInstalling,
 	}, nil
 
 }
@@ -254,6 +262,7 @@ func (cs GenericClustersService) Get(id string) (result api.Cluster, err error) 
 		memory       int
 		cpuCores     int
 		storage      int
+		state        api.ClusterState
 	)
 
 	err = db.QueryRow(`
@@ -266,7 +275,8 @@ func (cs GenericClustersService) Get(id string) (result api.Cluster, err error) 
 		compute_nodes,
 		memory,
 		cpu_cores,
-		storage
+		storage,
+		state
 	FROM clusters
 	WHERE id = $1`, id).Scan(
 		&id,
@@ -277,7 +287,8 @@ func (cs GenericClustersService) Get(id string) (result api.Cluster, err error) 
 		&computeNodes,
 		&memory,
 		&cpuCores,
-		&storage)
+		&storage,
+		&state)
 
 	if err != nil {
 		return api.Cluster{}, err
@@ -305,6 +316,7 @@ func (cs GenericClustersService) Get(id string) (result api.Cluster, err error) 
 				Total: storage,
 				Used:  0,
 			},
+			State: state,
 		},
 		nil
 }
