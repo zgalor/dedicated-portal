@@ -179,7 +179,7 @@ func (provisioner *ClusterOperatorProvisioner) createClusterVersionIfNotExist(sp
 	openshiftAnsibleImage := "cluster-operator-ansible:canary"
 	clusterAPIImage := "default('registry.svc.ci.openshift.org/openshift-cluster-operator/kubernetes-cluster-api:latest')"
 	machineControllerImgae := "default('registry.svc.ci.openshift.org/openshift-cluster-operator/cluster-operator:latest')"
-	pullPolicyNever := corev1.PullNever
+	pullPolicy := corev1.PullIfNotPresent
 	clusterVersionName := "origin-v3-10"
 	clusterVersion := v1alpha1.ClusterVersion{
 		TypeMeta: metav1.TypeMeta{
@@ -206,11 +206,11 @@ func (provisioner *ClusterOperatorProvisioner) createClusterVersionIfNotExist(sp
 			Images: v1alpha1.ClusterVersionImages{
 				ImageFormat:                      "openshift/origin-${component}:v3.10.0",
 				OpenshiftAnsibleImage:            &openshiftAnsibleImage,
-				OpenshiftAnsibleImagePullPolicy:  &pullPolicyNever,
+				OpenshiftAnsibleImagePullPolicy:  &pullPolicy,
 				ClusterAPIImage:                  &clusterAPIImage,
-				ClusterAPIImagePullPolicy:        &pullPolicyNever,
+				ClusterAPIImagePullPolicy:        &pullPolicy,
 				MachineControllerImage:           &machineControllerImgae,
-				MachineControllerImagePullPolicy: &pullPolicyNever,
+				MachineControllerImagePullPolicy: &pullPolicy,
 			},
 		},
 	}
