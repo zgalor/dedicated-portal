@@ -108,7 +108,7 @@ func (provisioner *ClusterOperatorProvisioner) clusterDeploymentFromSpec(spec ap
 				CIDRBlocks: []string{"172.30.0.0/16"},
 			},
 			Pods: capiv1.NetworkRanges{
-				CIDRBlocks: []string{"172.30.0.0/14"},
+				CIDRBlocks: []string{"10.128.0.0/14"},
 			},
 		},
 		Hardware: v1alpha1.ClusterHardwareSpec{
