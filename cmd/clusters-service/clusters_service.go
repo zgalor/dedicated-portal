@@ -61,6 +61,12 @@ func (cs GenericClustersService) List(args ListArguments) (result api.ClusterLis
 		return api.ClusterList{}, fmt.Errorf("Error openning connection: %v", err)
 	}
 	defer db.Close()
+
+	total, err := cs.getClusterCount(db)
+	if err != nil {
+		return api.ClusterList{}, err
+	}
+
 	rows, err := db.Query(`SELECT 
 		id,
 		name,
@@ -144,6 +150,7 @@ func (cs GenericClustersService) List(args ListArguments) (result api.ClusterLis
 	}
 	result.Page = args.Page
 	result.Size = len(result.Items)
+	result.Total = total
 	return result, nil
 }
 
@@ -321,4 +328,10 @@ func (cs GenericClustersService) Get(id string) (result api.Cluster, err error) 
 			State: state,
 		},
 		nil
+}
+
+func (cs GenericClustersService) getClusterCount(db *sql.DB) (total int, err error) {
+	// retrieve total number of clusters.
+	err = db.QueryRow("select count(*) from clusters").Scan(&total)
+	return
 }
