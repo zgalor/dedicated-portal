@@ -176,9 +176,9 @@ func (provisioner *ClusterOperatorProvisioner) machineSetsFromSpec(spec api.Clus
 }
 
 func (provisioner *ClusterOperatorProvisioner) createClusterVersionIfNotExist(spec api.Cluster) error {
-	openshiftAnsibleImage := "cluster-operator-ansible:canary"
-	clusterAPIImage := "default('registry.svc.ci.openshift.org/openshift-cluster-operator/kubernetes-cluster-api:latest')"
-	machineControllerImgae := "default('registry.svc.ci.openshift.org/openshift-cluster-operator/cluster-operator:latest')"
+	openshiftAnsibleImage := "registry.svc.ci.openshift.org/openshift-cluster-operator/cluster-operator-ansible:latest"
+	clusterAPIImage := "registry.svc.ci.openshift.org/openshift-cluster-operator/kubernetes-cluster-api:latest"
+	machineControllerImgae := "registry.svc.ci.openshift.org/openshift-cluster-operator/cluster-operator:latest"
 	pullPolicy := corev1.PullIfNotPresent
 	clusterVersionName := "origin-v3-10"
 	clusterVersion := v1alpha1.ClusterVersion{
