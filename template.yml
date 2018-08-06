@@ -73,32 +73,9 @@ objects:
           args:
           - serve
           - --demo-mode=${DEMO_MODE}
-          - --db-url=postgres://service:${PASSWORD}@localhost:5432/clusters?sslmode=disable
+          - --db-url=postgres://service:${PASSWORD}@clusters-db-service.${NAMESPACE}/clusters?sslmode=disable
           - --jwk-certs-url=https://developers.redhat.com/auth/realms/rhd/protocol/openid-connect/certs
-          command:
-          - /usr/local/bin/clusters-service
-          ports:
-          - containerPort: 8000
-            name: clusters-svc
-        - name: postgresql
-          image: centos/postgresql-94-centos7
-          imagePullPolicy: IfNotPresent
-          env:
-          - name: POSTGRESQL_DATABASE
-            value: clusters
-          - name: POSTGRESQL_USER
-            value: service
-          - name: POSTGRESQL_PASSWORD
-            value: ${PASSWORD}
-          ports:
-          - containerPort: 5432
-            protocol: TCP
-          volumeMounts:
-          - mountPath: /var/lib/pgsql/data
-            name: data
-        volumes:
-        - emptyDir: {}
-          name: data
+
 - apiVersion: v1
   kind: Service
   metadata:
@@ -147,27 +124,8 @@ objects:
           args:
           - serve
           - --demo-mode=${DEMO_MODE}
-          - --db-url=postgres://service:${PASSWORD}@localhost:5432/customers?sslmode=disable
+          - --db-url=postgres://service:${PASSWORD}@customers-db-service.${NAMESPACE}/customers?sslmode=disable
           - --jwk-certs-url=https://developers.redhat.com/auth/realms/rhd/protocol/openid-connect/certs
-        - name: postgresql
-          image: centos/postgresql-94-centos7
-          imagePullPolicy: IfNotPresent
-          env:
-          - name: POSTGRESQL_DATABASE
-            value: customers
-          - name: POSTGRESQL_USER
-            value: service
-          - name: POSTGRESQL_PASSWORD
-            value: ${PASSWORD}
-          ports:
-          - containerPort: 5432
-            protocol: TCP
-          volumeMounts:
-          - mountPath: /var/lib/pgsql/data
-            name: data
-        volumes:
-        - emptyDir: {}
-          name: data
 
 - apiVersion: v1
   kind: Service
@@ -193,3 +151,111 @@ objects:
       name: customers-service
     tls:
       termination: edge
+
+# customers-db-service
+#
+# Postgresql DB for the customers service
+
+- apiVersion: apps/v1beta1
+  kind: Deployment
+  metadata:
+    name: customers-db-service
+    labels:
+      app: customers-db-service
+  spec:
+    selector:
+      matchLabels:
+        app: customers-db-service
+    replicas: 1
+    template:
+      metadata:
+        labels:
+          app: customers-db-service
+      spec:
+        containers:
+        - name: postgresql
+          image: centos/postgresql-94-centos7
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: POSTGRESQL_DATABASE
+            value: customers
+          - name: POSTGRESQL_USER
+            value: service
+          - name: POSTGRESQL_PASSWORD
+            value: ${PASSWORD}
+          ports:
+          - containerPort: 5432
+            protocol: TCP
+          volumeMounts:
+          - mountPath: /var/lib/pgsql/data
+            name: data
+        volumes:
+        - emptyDir: {}
+          name: data
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: customers-db-service
+    labels:
+      app: customers-db-service
+  spec:
+    selector:
+      app: customers-db-service
+    ports:
+    - port: 5432
+      targetPort: 5432
+
+# clusters-db-service
+#
+# Postgresql DB for the customers service
+
+- apiVersion: apps/v1beta1
+  kind: Deployment
+  metadata:
+    name: clusters-db-service
+    labels:
+      app: clusters-db-service
+  spec:
+    selector:
+      matchLabels:
+        app: clusters-db-service
+    replicas: 1
+    template:
+      metadata:
+        labels:
+          app: clusters-db-service
+      spec:
+        containers:
+        - name: postgresql
+          image: centos/postgresql-94-centos7
+          imagePullPolicy: IfNotPresent
+          env:
+          - name: POSTGRESQL_DATABASE
+            value: clusters
+          - name: POSTGRESQL_USER
+            value: service
+          - name: POSTGRESQL_PASSWORD
+            value: ${PASSWORD}
+          ports:
+          - containerPort: 5432
+            protocol: TCP
+          volumeMounts:
+          - mountPath: /var/lib/pgsql/data
+            name: data
+        volumes:
+        - emptyDir: {}
+          name: data
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: clusters-db-service
+    labels:
+      app: clusters-db-service
+  spec:
+    selector:
+      app: clusters-db-service
+    ports:
+    - port: 5432
+      targetPort: 5432
