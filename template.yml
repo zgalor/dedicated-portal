@@ -44,6 +44,10 @@ parameters:
 - name: PASSWORD
   description: Password for the database user.
 
+- name: DEMO_MODE
+  description: If set to true, services will run without authentication.
+  value: "false"
+
 objects:
 
 - apiVersion: apps/v1beta1
@@ -68,6 +72,7 @@ objects:
           imagePullPolicy: IfNotPresent
           args:
           - serve
+          - --demo-mode=${DEMO_MODE}
           - --db-url=postgres://service:${PASSWORD}@localhost:5432/clusters?sslmode=disable
           - --jwk-certs-url=https://developers.redhat.com/auth/realms/rhd/protocol/openid-connect/certs
           command:
@@ -116,6 +121,8 @@ objects:
     to:
       kind: Service
       name: clusters-service
+    tls:
+      termination: edge
 
 - apiVersion: apps/v1beta1
   kind: Deployment
@@ -139,6 +146,7 @@ objects:
           imagePullPolicy: IfNotPresent
           args:
           - serve
+          - --demo-mode=${DEMO_MODE}
           - --db-url=postgres://service:${PASSWORD}@localhost:5432/customers?sslmode=disable
           - --jwk-certs-url=https://developers.redhat.com/auth/realms/rhd/protocol/openid-connect/certs
         - name: postgresql
