@@ -47,7 +47,7 @@ type ClusterOperatorProvisioner struct {
 	k8sClient             *k8s.Clientset
 }
 
-const clusterNameSpace = "dedicated-portal"
+const clusterNameSpace = "unified-hybrid-cloud"
 
 // NewClusterOperatorProvisioner A constructor for ClusterOperatorProvisioner struct.
 func NewClusterOperatorProvisioner(k8sConfig *rest.Config) (*ClusterOperatorProvisioner, error) {
