@@ -29,6 +29,7 @@ oc process \
   --param=VERSION="${TEMPLATE_VERSION:-latest}" \
   --param=DOMAIN="${TEMPLATE_DOMAIN:-example.com}" \
   --param=PASSWORD="${TEMPLATE_PASSWORD:-redhat123}" \
+  --param=DEMO_MODE="${TEMPLATE_DEMO_MODE: }" \
 | \
 oc apply \
   --filename=-
