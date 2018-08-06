@@ -4,3 +4,5 @@
 /vendor/
 build/
 node_modules/
+cmd/clusters-service/data/*
+cmd/customers-service/data/*
