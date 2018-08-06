@@ -14,7 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//go:generate go-bindata -o ./data/migrations.go -pkg migrations -prefix data/migrations/ ./data/migrations
+//nolint
+//go:generate python -c "import json, sys, yaml; y=yaml.safe_load(open(\"./data/swagger/customers-service.yaml\")); open(\"./data/swagger/customers-service.json\",\"w\").write(json.dumps(y))"
+//nolint
+//go:generate go-bindata -o ./data/generated/migrations/migrations.go -pkg migrations -prefix data/migrations/ ./data/migrations
+//go:generate go-bindata -o ./data/generated/swagger/openapi.go -pkg openapi -prefix data/swagger/ ./data/swagger
 
 package main
 
@@ -34,7 +38,9 @@ import (
 	"github.com/container-mgmt/dedicated-portal/pkg/sql"
 
 	//nolint
-	"github.com/container-mgmt/dedicated-portal/cmd/customers-service/data"
+	"github.com/container-mgmt/dedicated-portal/cmd/customers-service/data/generated/migrations"
+	//nolint
+	"github.com/container-mgmt/dedicated-portal/cmd/customers-service/data/generated/swagger"
 )
 
 var serveArgs struct {
@@ -44,6 +50,9 @@ var serveArgs struct {
 	dbURL      string
 	demoMode   bool
 }
+
+// A static json file containing the openAPI json definitions
+var openAPIdefinitions []byte
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
@@ -130,6 +139,8 @@ func runServe(cmd *cobra.Command, args []string) {
 	apiRouter.HandleFunc("/customers", server.getCustomersList).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/customers", server.addCustomer).Methods(http.MethodPost)
 	apiRouter.HandleFunc("/customers/{id}", server.getCustomerByID).Methods(http.MethodGet)
+	apiRouter.HandleFunc("/openapi", getOpenAPI).Methods(http.MethodGet)
+
 	apiRouter.Path("/customers").
 		Queries("page", "{[0-9]+}", "size", "{[0-9]+}").
 		Methods(http.MethodGet).
@@ -164,11 +175,28 @@ func runServe(cmd *cobra.Command, args []string) {
 		loggedRouter = handlers.LoggingHandler(os.Stdout, mainRouter)
 	}
 
+	// Try to load openAPI data
+	openAPIdefinitions, err = openapi.Asset("customers-service.json")
+	if err != nil {
+		check(err, "Can't load openAPI definitions")
+	}
+
 	// Inform user we are starting.
 	glog.Infof("Starting customers-service server at %s.", serverAddress)
 
 	// ListenAndServe
 	log.Fatal(http.ListenAndServe(serverAddress, loggedRouter))
+}
+
+// write openAPI respinse
+func getOpenAPI(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	// Send response body
+	_, err := w.Write(openAPIdefinitions)
+	if err != nil {
+		glog.Errorf("Write to client: %s", err)
+	}
 }
 
 // Exit on error
