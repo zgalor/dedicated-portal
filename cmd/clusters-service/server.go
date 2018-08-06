@@ -14,7 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-//go:generate go-bindata -o ./data/migrations.go -pkg migrations -prefix data/migrations/ ./data/migrations
+//nolint
+//go:generate python -c "import json, sys, yaml; y=yaml.safe_load(open(\"./data/swagger/clusters-service.yaml\")); open(\"./data/swagger/clusters-service.json\",\"w\").write(json.dumps(y))"
+//nolint
+//go:generate go-bindata -o ./data/generated/migrations/migrations.go -pkg migrations -prefix data/migrations/ ./data/migrations
+//go:generate go-bindata -o ./data/generated/swagger/openapi.go -pkg openapi -prefix data/swagger/ ./data/swagger
 
 package main
 
@@ -37,7 +41,9 @@ import (
 	"github.com/container-mgmt/dedicated-portal/pkg/sql"
 
 	//nolint
-	"github.com/container-mgmt/dedicated-portal/cmd/clusters-service/data"
+	"github.com/container-mgmt/dedicated-portal/cmd/clusters-service/data/generated/migrations"
+	//nolint
+	"github.com/container-mgmt/dedicated-portal/cmd/clusters-service/data/generated/swagger"
 )
 
 var serveArgs struct {
@@ -56,6 +62,7 @@ var serveCmd = &cobra.Command{
 var (
 	clusterOperatorKubeAddress string
 	clusterOperatorKubeConfig  string
+	openAPIdefinitions         []byte
 )
 
 // Server serves HTTP API requests on clusters.
@@ -112,6 +119,7 @@ func NewServer(stopCh <-chan struct{}, clusterService ClustersService) *Server {
 }
 
 func (s Server) start() error {
+	var err error
 	var loggedRouter http.Handler
 
 	// Create the main router:
@@ -122,6 +130,7 @@ func (s Server) start() error {
 	apiRouter.HandleFunc("/clusters", s.listClusters).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/clusters", s.createCluster).Methods(http.MethodPost)
 	apiRouter.HandleFunc("/clusters/{id}", s.getCluster).Methods(http.MethodGet)
+	apiRouter.HandleFunc("/openapi", getOpenAPI).Methods(http.MethodGet)
 
 	// If not in demo mode, check JWK and add a JWT middleware:
 	//
@@ -148,6 +157,12 @@ func (s Server) start() error {
 	} else {
 		// Enable the access log:
 		loggedRouter = handlers.LoggingHandler(os.Stdout, mainRouter)
+	}
+
+	// Try to load openAPI data
+	openAPIdefinitions, err = openapi.Asset("clusters-service.json")
+	if err != nil {
+		check(err, "Can't load openAPI definitions")
 	}
 
 	fmt.Println("Listening.")
@@ -269,6 +284,17 @@ func kubeConfigPath(clusterOperatorKubeConfig string) (kubeConfig string, err er
 	}
 
 	return
+}
+
+// write openAPI respinse
+func getOpenAPI(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	// Send response body
+	_, err := w.Write(openAPIdefinitions)
+	if err != nil {
+		glog.Errorf("Write to client: %s", err)
+	}
 }
 
 // Exit on error
