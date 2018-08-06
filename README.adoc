@@ -61,6 +61,31 @@ $ oc delete namespace dedicated-portal
 
 == Deploying using oc cluster up
 
+=== Fedora
+
+Install and setup Docker:
+
+[source]
+----
+sudo dnf install docker
+sudo systemctl start docker
+----
+
+Install and setup origin-clients:
+
+[source]
+----
+dnf install origin-clients
+----
+
+Edit the `/etc/containers/registries.conf` file and add the following lines:
+
+[source]
+----
+[registries.insecure]
+registries = ['172.30.0.0/16']
+----
+
 Run:
 
 [source]
