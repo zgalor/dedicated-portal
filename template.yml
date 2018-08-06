@@ -45,7 +45,8 @@ parameters:
   description: Password for the database user.
 
 - name: DEMO_MODE
-  description: If set to "--demo-mode", services will run without authentication.
+  description: If set to true, services will run without authentication.
+  value: "false"
 
 objects:
 
@@ -71,7 +72,7 @@ objects:
           imagePullPolicy: IfNotPresent
           args:
           - serve
-          - ${DEMO_MODE}
+          - --demo-mode=${DEMO_MODE}
           - --db-url=postgres://service:${PASSWORD}@localhost:5432/clusters?sslmode=disable
           - --jwk-certs-url=https://developers.redhat.com/auth/realms/rhd/protocol/openid-connect/certs
           command:
@@ -145,7 +146,7 @@ objects:
           imagePullPolicy: IfNotPresent
           args:
           - serve
-          - ${DEMO_MODE}
+          - --demo-mode=${DEMO_MODE}
           - --db-url=postgres://service:${PASSWORD}@localhost:5432/customers?sslmode=disable
           - --jwk-certs-url=https://developers.redhat.com/auth/realms/rhd/protocol/openid-connect/certs
         - name: postgresql

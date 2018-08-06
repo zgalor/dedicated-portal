@@ -48,7 +48,7 @@ var serveArgs struct {
 	port       int
 	jwkCertURL string
 	dbURL      string
-	demoMode   bool
+	demoMode   string
 }
 
 // A static json file containing the openAPI json definitions
@@ -87,11 +87,11 @@ func init() {
 		"",
 		"The url endpoint for the JWK certs.",
 	)
-	flags.BoolVar(
+	flags.StringVar(
 		&serveArgs.demoMode,
 		"demo-mode",
-		false,
-		"Run in demo mode (no token needed, return demo data).",
+		"false",
+		"If set to \"true\" run in demo mode (no token needed, return demo data).",
 	)
 }
 
@@ -104,7 +104,7 @@ func runServe(cmd *cobra.Command, args []string) {
 	//
 	// If not in demo mode, try to connect to the sql server.
 	// If we are in demo mode, connect to a demo data source.
-	if !serveArgs.demoMode {
+	if serveArgs.demoMode != "true" {
 		// Check for db url cli arg:
 		if serveArgs.dbURL == "" {
 			check(fmt.Errorf("flag missing: --db-url"), "No db URL defined")
@@ -150,7 +150,7 @@ func runServe(cmd *cobra.Command, args []string) {
 	//
 	// When running on demo mode we want to bypass the JWT check
 	// and serve mock data.
-	if !serveArgs.demoMode {
+	if serveArgs.demoMode != "true" {
 		// Check for JWK cert cli arg:
 		if serveArgs.jwkCertURL == "" {
 			check(fmt.Errorf("flag missing: --jwk-certs-url"), "No cert URL defined")

@@ -49,7 +49,7 @@ import (
 var serveArgs struct {
 	jwkCertURL string
 	dbURL      string
-	demoMode   bool
+	demoMode   string
 }
 
 var serveCmd = &cobra.Command{
@@ -85,11 +85,11 @@ func init() {
 		"",
 		"The url endpoint for the JWK certs.",
 	)
-	flags.BoolVar(
+	flags.StringVar(
 		&serveArgs.demoMode,
 		"demo-mode",
-		false,
-		"Run in demo mode (no token needed).",
+		"false",
+		"If set to \"true\" run in demo mode (no token needed, return demo data).",
 	)
 	flags.StringVar(
 		&clusterOperatorKubeConfig,
@@ -136,7 +136,7 @@ func (s Server) start() error {
 	//
 	// When running on demo mode we want to bypass the JWT check
 	// and serve mock data.
-	if !serveArgs.demoMode {
+	if serveArgs.demoMode != "true" {
 		// Check for JWK cert cli arg:
 		if serveArgs.jwkCertURL == "" {
 			check(fmt.Errorf("flag missing: --jwk-certs-url"), "No cert URL defined")
