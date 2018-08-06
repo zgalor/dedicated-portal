@@ -31,7 +31,7 @@ parameters:
 
 - name: NAMESPACE
   description: The namespace where the objects will be created.
-  value: dedicated-portal
+  value: unified-hybrid-cloud
 
 - name: VERSION
   description: The version number of the project.
