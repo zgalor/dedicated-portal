@@ -80,10 +80,10 @@ pipeline {
             done
 
             # Deploy the application:
-            oc ${OC_ARGS} new-project dedicated-portal || oc ${OC_ARGS} project dedicated-portal || true
+            oc ${OC_ARGS} new-project unified-hybrid-cloud || oc ${OC_ARGS} project unified-hybrid-cloud || true
             oc ${OC_ARGS} process \
               --filename=template.yml \
-              --param=NAMESPACE=dedicated-portal \
+              --param=NAMESPACE=unified-hybrid-cloud \
               --param=VERSION=${GIT_COMMIT} \
               --param=DOMAIN=${SSH_HOST} \
               --param=PASSWORD=redhat123 \

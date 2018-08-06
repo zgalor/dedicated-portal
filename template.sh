@@ -20,12 +20,12 @@
 # the application.
 
 # Create the namespace:
-oc new-project dedicated-portal || oc project dedicated-portal || true
+oc new-project unified-hybrid-cloud || oc project unified-hybrid-cloud || true
 
 # Use the template to create the objects:
 oc process \
   --filename="template.yml" \
-  --param=NAMESPACE="${TEMPLATE_NAMESPACE:-dedicated-portal}" \
+  --param=NAMESPACE="${TEMPLATE_NAMESPACE:-unified-hybrid-cloud}" \
   --param=VERSION="${TEMPLATE_VERSION:-latest}" \
   --param=DOMAIN="${TEMPLATE_DOMAIN:-example.com}" \
   --param=PASSWORD="${TEMPLATE_PASSWORD:-redhat123}" \
