@@ -44,11 +44,14 @@ import (
 )
 
 var serveArgs struct {
-	host       string
-	port       int
-	jwkCertURL string
-	dbURL      string
-	demoMode   string
+	host          string
+	port          int
+	jwkCertURL    string
+	dbURL         string
+	demoMode      string
+	noHTTPS       bool
+	httpsCertPath string
+	httpsKeyPath  string
 }
 
 // A static json file containing the openAPI json definitions
@@ -92,6 +95,24 @@ func init() {
 		"demo-mode",
 		"false",
 		"If set to \"true\" run in demo mode (no token needed, return demo data).",
+	)
+	flags.BoolVar(
+		&serveArgs.noHTTPS,
+		"no-https",
+		false,
+		"Serve without using tls.",
+	)
+	flags.StringVar(
+		&serveArgs.httpsCertPath,
+		"https-cert-path",
+		"",
+		"The path to the tls.crt file.",
+	)
+	flags.StringVar(
+		&serveArgs.httpsKeyPath,
+		"https-key-path",
+		"",
+		"The path to the tls.key file.",
 	)
 }
 
@@ -184,8 +205,28 @@ func runServe(cmd *cobra.Command, args []string) {
 	// Inform user we are starting.
 	glog.Infof("Starting customers-service server at %s.", serverAddress)
 
+	// Create the http server
+	srv := &http.Server{
+		Addr:    serverAddress,
+		Handler: loggedRouter,
+	}
+
 	// ListenAndServe
-	log.Fatal(http.ListenAndServe(serverAddress, loggedRouter))
+	if serveArgs.noHTTPS {
+		// Serve without TLS
+		log.Fatal(srv.ListenAndServe())
+	} else {
+		// Check https cert and key path path
+		if serveArgs.httpsCertPath == "" || serveArgs.httpsKeyPath == "" {
+			check(
+				fmt.Errorf("Unspecified required --https-cert-path, --https-key-path"),
+				"Can't start https server",
+			)
+		}
+
+		// Serve with TLS
+		log.Fatal(srv.ListenAndServeTLS(serveArgs.httpsCertPath, serveArgs.httpsKeyPath))
+	}
 }
 
 // write openAPI respinse

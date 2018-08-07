@@ -47,9 +47,12 @@ import (
 )
 
 var serveArgs struct {
-	jwkCertURL string
-	dbURL      string
-	demoMode   string
+	jwkCertURL    string
+	dbURL         string
+	demoMode      string
+	noHTTPS       bool
+	httpsCertPath string
+	httpsKeyPath  string
 }
 
 var serveCmd = &cobra.Command{
@@ -107,6 +110,24 @@ func init() {
 			"Overrides any value in the Kubernetes "+
 			"configuration file. Only required when running cluster-operator outside of the cluster "+
 			"where the clusters-service is running.",
+	)
+	flags.BoolVar(
+		&serveArgs.noHTTPS,
+		"no-https",
+		false,
+		"Serve without using tls.",
+	)
+	flags.StringVar(
+		&serveArgs.httpsCertPath,
+		"https-cert-path",
+		"",
+		"The path to the tls.crt file.",
+	)
+	flags.StringVar(
+		&serveArgs.httpsKeyPath,
+		"https-key-path",
+		"",
+		"The path to the tls.key file.",
 	)
 }
 
@@ -166,7 +187,30 @@ func (s Server) start() error {
 	}
 
 	fmt.Println("Listening.")
-	go http.ListenAndServe(":8000", loggedRouter)
+
+	// Create the http server
+	srv := &http.Server{
+		Addr:    ":8000",
+		Handler: loggedRouter,
+	}
+
+	// ListenAndServe
+	if serveArgs.noHTTPS {
+		// Serve without TLS
+		go srv.ListenAndServe()
+	} else {
+		// Check https cert and key path path
+		if serveArgs.httpsCertPath == "" || serveArgs.httpsKeyPath == "" {
+			check(
+				fmt.Errorf("Unspecified required --https-cert-path, --https-key-path"),
+				"Can't start https server",
+			)
+		}
+
+		// Serve with TLS
+		go srv.ListenAndServeTLS(serveArgs.httpsCertPath, serveArgs.httpsKeyPath)
+	}
+
 	return nil
 }
 

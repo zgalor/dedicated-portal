@@ -26,7 +26,6 @@ metadata:
   name: unified-hybrid-cloud
   annotations:
     description: "Unified Hybrid Cloud"
-
 parameters:
 
 - name: NAMESPACE
@@ -50,6 +49,10 @@ parameters:
 
 objects:
 
+# Cluster service
+# ---------------
+
+# Deployment
 - apiVersion: apps/v1beta1
   kind: Deployment
   metadata:
@@ -66,6 +69,10 @@ objects:
         labels:
           app: clusters-service
       spec:
+        volumes:
+          - name: https-clusters-secret
+            secret:
+              secretName: https-clusters-secret
         containers:
         - name: service
           image: dedicated-portal/clusters-service:${VERSION}
@@ -75,20 +82,27 @@ objects:
           - --demo-mode=${DEMO_MODE}
           - --db-url=postgres://service:${PASSWORD}@clusters-db-service.${NAMESPACE}/clusters?sslmode=disable
           - --jwk-certs-url=https://developers.redhat.com/auth/realms/rhd/protocol/openid-connect/certs
-
+          - --https-cert-path=/secrets/tls.crt
+          - --https-key-path=/secrets/tls.key
+          volumeMounts:
+          - name: https-clusters-secret
+            mountPath: "/secrets"
+# Service
 - apiVersion: v1
   kind: Service
   metadata:
     name: clusters-service
     labels:
       app: clusters-service
+    annotations:
+      "service.alpha.openshift.io/serving-cert-secret-name": https-clusters-secret
   spec:
     selector:
       app: clusters-service
     ports:
     - port: 8000
       targetPort: 8000
-
+# Route
 - apiVersion: v1
   kind: Route
   metadata:
@@ -99,8 +113,12 @@ objects:
       kind: Service
       name: clusters-service
     tls:
-      termination: edge
+      termination: passthrough
 
+# Customers service
+# -----------------
+
+# Deployment
 - apiVersion: apps/v1beta1
   kind: Deployment
   metadata:
@@ -117,6 +135,10 @@ objects:
         labels:
           app: customers-service
       spec:
+        volumes:
+        - name: https-customers-secret
+          secret:
+            secretName: https-customers-secret
         containers:
         - name: service
           image: dedicated-portal/customers-service:${VERSION}
@@ -126,20 +148,27 @@ objects:
           - --demo-mode=${DEMO_MODE}
           - --db-url=postgres://service:${PASSWORD}@customers-db-service.${NAMESPACE}/customers?sslmode=disable
           - --jwk-certs-url=https://developers.redhat.com/auth/realms/rhd/protocol/openid-connect/certs
-
+          - --https-cert-path=/secrets/tls.crt
+          - --https-key-path=/secrets/tls.key
+          volumeMounts:
+          - name: https-customers-secret
+            mountPath: "/secrets"
+# Service
 - apiVersion: v1
   kind: Service
   metadata:
     name: customers-service
     labels:
       app: customers-service
+    annotations:
+      "service.alpha.openshift.io/serving-cert-secret-name": https-customers-secret
   spec:
     selector:
       app: customers-service
     ports:
     - port: 8000
       targetPort: 8000
-
+# Route
 - apiVersion: v1
   kind: Route
   metadata:
@@ -150,12 +179,12 @@ objects:
       kind: Service
       name: customers-service
     tls:
-      termination: edge
+      termination: passthrough
 
-# customers-db-service
-#
-# Postgresql DB for the customers service
+# Customers DB
+# ------------
 
+# Deployment
 - apiVersion: apps/v1beta1
   kind: Deployment
   metadata:
@@ -192,7 +221,7 @@ objects:
         volumes:
         - emptyDir: {}
           name: data
-
+# Service
 - apiVersion: v1
   kind: Service
   metadata:
@@ -206,10 +235,10 @@ objects:
     - port: 5432
       targetPort: 5432
 
-# clusters-db-service
-#
-# Postgresql DB for the customers service
+# Clusters DB
+# ------------
 
+# Deployment
 - apiVersion: apps/v1beta1
   kind: Deployment
   metadata:
@@ -246,7 +275,7 @@ objects:
         volumes:
         - emptyDir: {}
           name: data
-
+# Service
 - apiVersion: v1
   kind: Service
   metadata:
