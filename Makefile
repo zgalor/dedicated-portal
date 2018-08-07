@@ -28,6 +28,10 @@ binaries: vendor
 	done
 
 vendor: Gopkg.lock
+	@if ! which hg; then \
+		echo Error: 'dep' needs mercurial for some dependencies; \
+		exit 1; \
+	fi
 	dep ensure -vendor-only -v
 
 .PHONY: images
