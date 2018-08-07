@@ -86,6 +86,76 @@ Edit the `/etc/containers/registries.conf` file and add the following lines:
 registries = ['172.30.0.0/16']
 ----
 
+Install mercurial:
+
+[source]
+----
+sudo yum install mercurial
+----
+
+Install the go-bindata and library and command line:
+
+[source]
+----
+go get -u github.com/go-bindata/go-bindata/...
+----
+
+Run:
+
+[source]
+----
+./hack/cluster-restart.sh
+----
+
+=== RHEL / CentOS
+
+Install and setup Docker:
+
+[source]
+----
+sudo yum install docker
+----
+
+
+Edit the `/etc/docker/daemon.json` file and add the following
+(if you already have some configuration there, just add the setting to the json file):
+
+[source]
+----
+{
+    "group": "dockerroot",
+    "insecure-registries" : [ "172.30.0.0/16" ]
+}
+----
+
+Restart docker:
+
+[source]
+----
+sudo systemctl start docker
+----
+
+In order to get the origin-clients you'll need to download that from
+
+[source]
+----
+https://github.com/openshift/origin/releases
+----
+
+Install mercurial:
+
+[source]
+----
+sudo yum install mercurial
+----
+
+Install the go-bindata and library and command line:
+
+[source]
+----
+go get -u github.com/go-bindata/go-bindata/...
+----
+
 Run:
 
 [source]
